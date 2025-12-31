@@ -1032,6 +1032,117 @@ global with sharing class Parse{
         return output;
     }
 
+    /** **************************************************************************************************** **
+     **                                          GLOBAL SHEET MAP METHODS                                    **
+     ** **************************************************************************************************** **/
+    
+    /**
+     * @description Method that takes an unzipped xlsx archive as parameter and
+     *              returns the sheet data as a map of sheet name to 2D List<List<Object>>
+     *              (row-major order)
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @return                A map with the sheet name as key and the 2D List<List<Object>> as value
+     */
+    global static Map<String, List<List<Object>>> toSheetMap(Map<String, Compression.ZipEntry> entries) {
+        return toSheetMap(entries, null);
+    }
+    
+     /**
+     * @description Method that takes an unzipped xlsx archive as parameter and
+     *              returns the sheet data as a map of sheet name to 2D List<List<Object>>
+     *              (row-major order)
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @param  selectedSheets A set of integers representing the sheet indexes to parse
+     * @return                A map with the sheet name as key and the 2D List<List<Object>> as value
+     */
+    global static Map<String, List<List<Object>>> toSheetMap(Map<String, Compression.ZipEntry> entries, Set<Integer> selectedSheets) {
+        Map<String, Integer> sheetNameIndexMap = Parse.toWorksheetNameIndexMap(entries);
+        String[] worksheetPaths = Parse.getWorksheetPaths(entries);
+        String[] sharedStrings = Parse.getSharedStrings(entries);
+        Map<String, List<List<Object>>> result = new Map<String, List<List<Object>>>();
+
+
+        Map<Integer, String> indexToSheetName = new Map<Integer, String>();
+        for (String sheetName : sheetNameIndexMap.keySet()) {
+            Integer idx = sheetNameIndexMap.get(sheetName);
+            if (selectedSheets == null || selectedSheets.contains(idx)) {
+                indexToSheetName.put(idx, sheetName);
+            }
+        }
+
+        for (Integer wi = 0; wi < worksheetPaths.size(); wi++) {
+            if (!indexToSheetName.containsKey(wi)) continue;
+            String sheetName = indexToSheetName.get(wi);
+            List<List<Object>> sheetRows = new List<List<Object>>();
+
+            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString());
+            Map<Integer, Map<Integer, Object>> cellMap = new Map<Integer, Map<Integer, Object>>();
+            Integer maxRow = 0;
+            Integer maxCol = 0;
+
+            while (true) {
+                if (xsr.getEventType() == XmlTag.START_ELEMENT && xsr.getLocalName() == 'c') {
+                    String cellRef = xsr.getAttributeValue(null, 'r');
+                    String cellType = xsr.getAttributeValue(null, 't');
+                    Integer colIdx = -1;
+                    Integer rowIdx = -1;
+                    if (cellRef != null) {
+                        String colName = ParseUtil.columnNameFromCellName(cellRef);
+                        colIdx = CommonUtil.columnNumberFromColumnName(colName) - 1;
+                        String rowNumStr = cellRef.replaceAll('[^0-9]', '');
+                        rowIdx = Integer.valueOf(rowNumStr) - 1;
+                        if (rowIdx > maxRow) maxRow = rowIdx;
+                        if (colIdx > maxCol) maxCol = colIdx;
+                    }
+                    Object value = null;
+                    Boolean foundValue = false;
+                    Integer depth = 0;
+                    while (xsr.hasNext()) {
+                        xsr.next();
+                        if (xsr.getEventType() == XmlTag.START_ELEMENT && (xsr.getLocalName() == 'v' || xsr.getLocalName() == 't')) {
+                            depth++;
+                        } else if (xsr.getEventType() == XmlTag.CHARACTERS && depth > 0) {
+                            String val = xsr.getText();
+                            if (cellType == 's') {
+                                value = sharedStrings != null && sharedStrings.size() > 0 ? sharedStrings[Integer.valueOf(val)] : val;
+                            } else {
+                                value = val;
+                            }
+                            foundValue = true;
+                        } else if (xsr.getEventType() == XmlTag.END_ELEMENT && (xsr.getLocalName() == 'v' || xsr.getLocalName() == 't')) {
+                            depth--;
+                        } else if (xsr.getEventType() == XmlTag.END_ELEMENT && xsr.getLocalName() == 'c') {
+                            break;
+                        }
+                    }
+                    if (colIdx >= 0 && rowIdx >= 0) {
+                        if (!cellMap.containsKey(rowIdx)) cellMap.put(rowIdx, new Map<Integer, Object>());
+                        cellMap.get(rowIdx).put(colIdx, value);
+                    }
+                }
+                if (xsr.hasNext()) {
+                    xsr.next();
+                } else {
+                    break;
+                }
+            }
+
+            // Build row-major 2D list
+            for (Integer ri = 0; ri <= maxRow; ri++) {
+                List<Object> row = new List<Object>();
+                for (Integer ci = 0; ci <= maxCol; ci++) {
+                    Object val = null;
+                    if (cellMap.containsKey(ri) && cellMap.get(ri).containsKey(ci)) {
+                        val = cellMap.get(ri).get(ci);
+                    }
+                    row.add(val);
+                }
+                sheetRows.add(row);
+            }
+            result.put(sheetName, sheetRows);
+        }
+        return result;
+    }
 
     /** **************************************************************************************************** **
      **                              PRIVATE SUPPORT METHODS (CLASS SPECIFIC)                                **
