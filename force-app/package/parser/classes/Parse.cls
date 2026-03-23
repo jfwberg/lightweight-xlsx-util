@@ -33,6 +33,11 @@ global with sharing class Parse{
      * @return         A map with the sheet name as key and the index as value
      */
     global static Map<String,Integer> toWorksheetNameIndexMap(Map<String,Compression.ZipEntry> entries){
+        return toWorksheetNameIndexMap(entries,null);
+    }
+
+
+    global static Map<String,Integer> toWorksheetNameIndexMap(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets){
 
         // Validate the workbook file exists
         if(!entries.containsKey(Constant.ZP_PATH_WORKBOOK)){
@@ -76,13 +81,50 @@ global with sharing class Parse{
         // Create a map for the output
         Map<String,Integer> worksheetNameIndexMap = new Map<String,Integer>();
 
+        // Keep track of skipped worksheets
+        Integer worksheetSkipCount = 0;
+
         // populate the output map
-        for(Integer i =0,max=sheetIndexes.size();i<max;i++){
-            worksheetNameIndexMap.put(sheetIndexes[i].name,i);
+        for(Integer wi=0,wiMax=sheetIndexes.size();wi<wiMax;wi++){
+
+            // Skip sheets that are not included in the selectedSheets
+            if(selectedSheets != null && !selectedSheets.contains(wi)){
+                worksheetSkipCount++;
+                continue;
+            }
+
+            // Calculate the current worksheet index in case we select specific worksheets only
+            Integer currentWi = wi-worksheetSkipCount;
+
+            // Add the name at the new worksheet index because some have been deleted
+            worksheetNameIndexMap.put(sheetIndexes[wi].name, currentWi);
         }
 
         // Return the output map
         return worksheetNameIndexMap;
+    }
+
+
+    global static Map<Integer,String> toWorksheetIndexNameMap(Map<String,Compression.ZipEntry> entries){
+        return toWorksheetIndexNameMap(entries,null);
+    }
+
+
+    global static Map<Integer,String> toWorksheetIndexNameMap(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets){
+        
+        // Create a map for the output
+        Map<Integer,String> worksheetIndexNameMap = new Map<Integer,String>();
+
+        // Create the worksheet index map using the main logic
+        Map<String,Integer> worksheetNameIndexMap = toWorksheetNameIndexMap(entries,selectedSheets);
+
+        // Invert the map
+        for(String worksheetName : worksheetNameIndexMap.keySet()){
+            worksheetIndexNameMap.put(worksheetNameIndexMap.get(worksheetName), worksheetName);
+        }
+
+        // Return the inverted map
+        return worksheetIndexNameMap;
     }
 
 
@@ -1038,111 +1080,85 @@ global with sharing class Parse{
     
     /**
      * @description Method that takes an unzipped xlsx archive as parameter and
-     *              returns the sheet data as a map of sheet name to 2D List<List<Object>>
+     *              returns the sheet data as a map of sheet name to 2D Object[][]
      *              (row-major order)
      * @param  entries        A map of path/zip entries from the unzipped XLSX file
-     * @return                A map with the sheet name as key and the 2D List<List<Object>> as value
+     * @return                A map with the sheet name as key and the 2D Object[][] as value
      */
-    global static Map<String, List<List<Object>>> toSheetMap(Map<String, Compression.ZipEntry> entries) {
-        return toSheetMap(entries, null);
+    global static Map<String, Object[][]> toSheetNameArrayMap(Map<String, Compression.ZipEntry> entries){
+        return toSheetNameArrayMap(entries, null);
     }
     
-     /**
+    
+    /**
      * @description Method that takes an unzipped xlsx archive as parameter and
-     *              returns the sheet data as a map of sheet name to 2D List<List<Object>>
+     *              returns the sheet data as a map of sheet name to 2D Object[][]
      *              (row-major order)
+     * @author 
      * @param  entries        A map of path/zip entries from the unzipped XLSX file
      * @param  selectedSheets A set of integers representing the sheet indexes to parse
-     * @return                A map with the sheet name as key and the 2D List<List<Object>> as value
+     * @return                A map with the sheet name as key and the 2D Object[][] as value
      */
-    global static Map<String, List<List<Object>>> toSheetMap(Map<String, Compression.ZipEntry> entries, Set<Integer> selectedSheets) {
-        Map<String, Integer> sheetNameIndexMap = Parse.toWorksheetNameIndexMap(entries);
-        String[] worksheetPaths = Parse.getWorksheetPaths(entries);
-        String[] sharedStrings = Parse.getSharedStrings(entries);
-        Map<String, List<List<Object>>> result = new Map<String, List<List<Object>>>();
+    global static Map<String, Object[][]> toSheetNameArrayMap(Map<String, Compression.ZipEntry> entries, Set<Integer> selectedSheets){
 
+        // Create the map for the output
+        Map<String, Object[][]> sheetNameArrayMap = new Map<String, Object[][]>();
 
-        Map<Integer, String> indexToSheetName = new Map<Integer, String>();
-        for (String sheetName : sheetNameIndexMap.keySet()) {
-            Integer idx = sheetNameIndexMap.get(sheetName);
-            if (selectedSheets == null || selectedSheets.contains(idx)) {
-                indexToSheetName.put(idx, sheetName);
-            }
+        // Get the sheet names related to the index
+        Map<Integer,String> worksheetIndexNameMap = toWorksheetIndexNameMap(entries,selectedSheets);
+
+        // Counter for the sheet index
+        Integer wi = 0;
+        
+        // Populate the worksheets array
+        for(Object[][] sheetData : toArray(entries,selectedSheets)){
+            sheetNameArrayMap.put(worksheetIndexNameMap.get(wi),sheetData);
+            wi++;
         }
 
-        for (Integer wi = 0; wi < worksheetPaths.size(); wi++) {
-            if (!indexToSheetName.containsKey(wi)) continue;
-            String sheetName = indexToSheetName.get(wi);
-            List<List<Object>> sheetRows = new List<List<Object>>();
-
-            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString());
-            Map<Integer, Map<Integer, Object>> cellMap = new Map<Integer, Map<Integer, Object>>();
-            Integer maxRow = 0;
-            Integer maxCol = 0;
-
-            while (true) {
-                if (xsr.getEventType() == XmlTag.START_ELEMENT && xsr.getLocalName() == 'c') {
-                    String cellRef = xsr.getAttributeValue(null, 'r');
-                    String cellType = xsr.getAttributeValue(null, 't');
-                    Integer colIdx = -1;
-                    Integer rowIdx = -1;
-                    if (cellRef != null) {
-                        String colName = ParseUtil.columnNameFromCellName(cellRef);
-                        colIdx = CommonUtil.columnNumberFromColumnName(colName) - 1;
-                        String rowNumStr = cellRef.replaceAll('[^0-9]', '');
-                        rowIdx = Integer.valueOf(rowNumStr) - 1;
-                        if (rowIdx > maxRow) maxRow = rowIdx;
-                        if (colIdx > maxCol) maxCol = colIdx;
-                    }
-                    Object value = null;
-                    Boolean foundValue = false;
-                    Integer depth = 0;
-                    while (xsr.hasNext()) {
-                        xsr.next();
-                        if (xsr.getEventType() == XmlTag.START_ELEMENT && (xsr.getLocalName() == 'v' || xsr.getLocalName() == 't')) {
-                            depth++;
-                        } else if (xsr.getEventType() == XmlTag.CHARACTERS && depth > 0) {
-                            String val = xsr.getText();
-                            if (cellType == 's') {
-                                value = sharedStrings != null && sharedStrings.size() > 0 ? sharedStrings[Integer.valueOf(val)] : val;
-                            } else {
-                                value = val;
-                            }
-                            foundValue = true;
-                        } else if (xsr.getEventType() == XmlTag.END_ELEMENT && (xsr.getLocalName() == 'v' || xsr.getLocalName() == 't')) {
-                            depth--;
-                        } else if (xsr.getEventType() == XmlTag.END_ELEMENT && xsr.getLocalName() == 'c') {
-                            break;
-                        }
-                    }
-                    if (colIdx >= 0 && rowIdx >= 0) {
-                        if (!cellMap.containsKey(rowIdx)) cellMap.put(rowIdx, new Map<Integer, Object>());
-                        cellMap.get(rowIdx).put(colIdx, value);
-                    }
-                }
-                if (xsr.hasNext()) {
-                    xsr.next();
-                } else {
-                    break;
-                }
-            }
-
-            // Build row-major 2D list
-            for (Integer ri = 0; ri <= maxRow; ri++) {
-                List<Object> row = new List<Object>();
-                for (Integer ci = 0; ci <= maxCol; ci++) {
-                    Object val = null;
-                    if (cellMap.containsKey(ri) && cellMap.get(ri).containsKey(ci)) {
-                        val = cellMap.get(ri).get(ci);
-                    }
-                    row.add(val);
-                }
-                sheetRows.add(row);
-            }
-            result.put(sheetName, sheetRows);
-        }
-        return result;
+        // Return the formatted data
+        return sheetNameArrayMap;
     }
+
+
+    global static Map<String, Object[][]> toSheetNameArrayInvertedMap(Map<String, Compression.ZipEntry> entries){
+        return toSheetNameArrayInvertedMap(entries,null);
+    }
+
+
+    global static Map<String, Object[][]> toSheetNameArrayInvertedMap(Map<String, Compression.ZipEntry> entries, Set<Integer> selectedSheets){
+
+        // Create the map for the output
+        Map<String, Object[][]> sheetNameArrayMap = new Map<String, Object[][]>();
+
+        // Get the sheet names related to the index
+        Map<Integer,String> worksheetIndexNameMap = toWorksheetIndexNameMap(entries,selectedSheets);
+
+        // Counter for the sheet index
+        Integer wi = 0;
+        
+        // Populate the worksheets array
+        for(Object[][] sheetData : toArrayInverted(entries,selectedSheets)){
+            sheetNameArrayMap.put(worksheetIndexNameMap.get(wi),sheetData);
+            wi++;
+        }
+
+        // Return the formatted data
+        return sheetNameArrayMap;
+    }
+
+
+    /*
+    Map<String, Object[][]> toSheetMap(Map<String,Compression.ZipEntry> entries){}
+    Map<String, Object[][]> toSheetMap(Map<String,Compression.ZipEntry> entries, Set<String> selectedSheets){}
+    Map<String, Object[][]> toSheetMapDomDoc(Map<String,Compression.ZipEntry> entries){}
+    Map<String, Object[][]> toSheetMapDomDoc(Map<String,Compression.ZipEntry> entries, Set<String> selectedSheets){}
+    Map<String, Object[][]> toSheetMapInverted(Map<String,Compression.ZipEntry> entries){}
+    Map<String, Object[][]> toSheetMapInverted(Map<String, Compression.ZipEntry> entries, Set<String> selectedSheets){}
+    Map<String, Object[][]> toSheetMapInvertedDomDoc(Map<String,Compression.ZipEntry> entries){}
+    Map<String, Object[][]> toSheetMapInvertedDomDoc(Map<String,Compression.ZipEntry> entries, Set<String> selectedSheets){}
+    */
+
 
     /** **************************************************************************************************** **
      **                              PRIVATE SUPPORT METHODS (CLASS SPECIFIC)                                **

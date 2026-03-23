@@ -1,7 +1,7 @@
 {
   "packageDirectories": [
     {
-      "versionName": "v63.0 - 0.6",
+      "versionName": "v66.0 - 0.6",
       "versionNumber": "0.6.0.NEXT",
       "ancestorVersion": "0.5.0",
       "path": "force-app/package",
@@ -10,7 +10,7 @@
       "versionDescription": "A lightweight library to build and parse Excel(XLSX) files"
     },
     {
-      "versionName": "v63.0 - 0.6",
+      "versionName": "v66.0 - 0.6",
       "versionNumber": "0.6.0.NEXT",
       "path": "force-app/package",
       "default": false,
@@ -21,7 +21,7 @@
   "name": "lightweight-xlsx-util",
   "namespace": "xlsx",
   "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "63.0",
+  "sourceApiVersion": "66.0",
   "packageAliases": {
     "Lightweight - XLSX Util": "0HoP300000000jBKAQ",
     "Lightweight - XLSX Util@0.1.0-1": "04tP30000010lw1IAA",
