@@ -4,10 +4,12 @@ Map<String, Object[][]> toSheetNameArrayInvertedMap(Map<String,Compression.ZipEn
 Map<String, Object[][]> toSheetNameArrayInvertedMap(Map<String, Compression.ZipEntry> entries, Set<String> selectedSheets){}
 
 
+String toLlmText(Map<String,Compression.ZipEntry> entries){}
+String toLlmText(Map<String,Compression.ZipEntry> entries, Set<String> selectedSheets){}
 
 
-
-Map<String, Object[][]> toSheetMapDomDoc(Map<String,Compression.ZipEntry> entries){}
-Map<String, Object[][]> toSheetMapDomDoc(Map<String,Compression.ZipEntry> entries, Set<String> selectedSheets){}
-Map<String, Object[][]> toSheetMapInvertedDomDoc(Map<String,Compression.ZipEntry> entries){}
-Map<String, Object[][]> toSheetMapInvertedDomDoc(Map<String,Compression.ZipEntry> entries, Set<String> selectedSheets){}
+// Todo
+Map<String, Object[][]> toSheetNameArrayMapDomDoc(Map<String,Compression.ZipEntry> entries){}
+Map<String, Object[][]> toSheetNameArrayMapDomDoc(Map<String,Compression.ZipEntry> entries, Set<String> selectedSheets){}
+Map<String, Object[][]> toSheetNameArrayMapInvertedDomDoc(Map<String,Compression.ZipEntry> entries){}
+Map<String, Object[][]> toSheetNameArrayMapInvertedDomDoc(Map<String,Compression.ZipEntry> entries, Set<String> selectedSheets){}

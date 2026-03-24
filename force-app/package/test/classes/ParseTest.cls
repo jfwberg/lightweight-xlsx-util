@@ -35,13 +35,16 @@ private with sharing class ParseTest {
         Test.stopTest();
 
         // Assert the indexes are correct
-        Assert.areEqual(0, indexMap1.get('Worksheet 01'), 'Unexpected sheet index');
-        Assert.areEqual(1, indexMap1.get('Worksheet 02'), 'Unexpected sheet index');
-        Assert.areEqual(0, indexMap2.get('Worksheet 01'), 'Unexpected sheet index');
-        Assert.areEqual(1, indexMap2.get('Worksheet 02'), 'Unexpected sheet index');
+        Assert.areEqual(0, indexMap1.get('Worksheet 01'), 'Unexpected sheet name');
+        Assert.areEqual(1, indexMap1.get('Worksheet 02'), 'Unexpected sheet name');
+        Assert.areEqual(0, indexMap2.get('Worksheet 01'), 'Unexpected sheet name');
+        Assert.areEqual(1, indexMap2.get('Worksheet 02'), 'Unexpected sheet name');
     }
 
     
+    /**
+     * @description Test Method for the worksheet name to index logic exception
+     */
     @IsTest
     private static void testToWorksheetNameIndexMapException(){
         
@@ -61,6 +64,37 @@ private with sharing class ParseTest {
                 TestUtil.EXCEPTION_ASSERTION_MESSAGE
             );
         }
+    }
+
+
+    /**
+     * @description Test Method for the worksheet index to name logic
+     */
+    @IsTest
+    private static void testToWorksheetIndexNameMap(){
+
+        // Create a basic file with 2 worksheets
+        Builder b = new Builder();
+        b.addWorksheet('Worksheet 01');
+        b.addWorksheet('Worksheet 02');
+        
+        // Build the archive as document and content version
+        Blob documentData       = Build.asDocument(b).body;
+        Blob contentVersionData = Build.asContentVersion(b).VersionData;
+
+        Test.startTest();
+        Map<Integer,String> indexMap1 = Parse.toWorksheetIndexNameMap(new Compression.ZipReader(documentData).getEntriesMap());
+        
+        // Only select the second sheet
+        Map<Integer,String> indexMap2 = Parse.toWorksheetIndexNameMap(new Compression.ZipReader(contentVersionData).getEntriesMap(), new Set<Integer>{1});
+        Test.stopTest();
+
+        // Assert the indexes are correct
+        Assert.areEqual(indexMap1.get(0), 'Worksheet 01', 'Unexpected sheet index');
+        Assert.areEqual(indexMap1.get(1), 'Worksheet 02', 'Unexpected sheet index');
+        
+        // The second sheet is selected and should have index 0 as it is the only one
+        Assert.areEqual(indexMap2.get(0), 'Worksheet 02', 'Unexpected sheet index');
     }
 
 
@@ -88,77 +122,96 @@ private with sharing class ParseTest {
         
         // Execute the tests
         Test.startTest();
-        Object[][][] documentResult                 = Parse.toArray(
-                                                        new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap()
-                                                    );
+        Object[][][] documentResult                     = Parse.toArray(
+                                                            new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap()
+                                                        );
 
-        Object[][][] contentVersionResult           = Parse.toArray(
-                                                        new Compression.ZipReader(Build.asContentVersion(b).VersionData).getEntriesMap(),
-                                                        new Set<Integer>{0,2}
-                                                    );
+        Object[][][] contentVersionResult               = Parse.toArray(
+                                                            new Compression.ZipReader(Build.asContentVersion(b).VersionData).getEntriesMap(),
+                                                            new Set<Integer>{0,2}
+                                                        );
 
-        Object[][][] documentResultDomDoc           = Parse.toArrayDomDoc(
-                                                        new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap()
-                                                    );
+        Object[][][] documentResultDomDoc               = Parse.toArrayDomDoc(
+                                                            new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap()
+                                                        );
 
-        Object[][][] contentVersionResultDomDoc     = Parse.toArrayDomDoc(
-                                                        new Compression.ZipReader(Build.asContentVersion(b).VersionData).getEntriesMap(),
-                                                        new Set<Integer>{0,2}
-                                                    );
+        Object[][][] contentVersionResultDomDoc         = Parse.toArrayDomDoc(
+                                                            new Compression.ZipReader(Build.asContentVersion(b).VersionData).getEntriesMap(),
+                                                            new Set<Integer>{0,2}
+                                                        );
         
-        Object[][][] documentResultIv               = Parse.toArrayInverted(
-                                                        new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap()
-                                                    );
+        Object[][][] documentResultIv                   = Parse.toArrayInverted(
+                                                            new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap()
+                                                        );
 
-        Object[][][] contentVersionResultIv         = Parse.toArrayInverted(
-                                                        new Compression.ZipReader(Build.asContentVersion(b).VersionData).getEntriesMap(),
-                                                        new Set<Integer>{0,2}
-                                                    );
+        Object[][][] contentVersionResultIv             = Parse.toArrayInverted(
+                                                            new Compression.ZipReader(Build.asContentVersion(b).VersionData).getEntriesMap(),
+                                                            new Set<Integer>{0,2}
+                                                        );
 
-        Object[][][] documentResultDomDocIv         = Parse.toArrayInvertedDomDoc(
-                                                        new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap()
-                                                    );
+        Object[][][] documentResultDomDocIv             = Parse.toArrayInvertedDomDoc(
+                                                            new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap()
+                                                        );
 
-        Object[][][] contentVersionResultDomDocIv   = Parse.toArrayInvertedDomDoc(
-                                                        new Compression.ZipReader(Build.asContentVersion(b).VersionData).getEntriesMap(),
-                                                        new Set<Integer>{0,2}
-                                                    );
+        Object[][][] contentVersionResultDomDocIv       = Parse.toArrayInvertedDomDoc(
+                                                            new Compression.ZipReader(Build.asContentVersion(b).VersionData).getEntriesMap(),
+                                                            new Set<Integer>{0,2}
+                                                        );
 
-       Object[][][] documentResultNd                = Parse.toArray(
-                                                        new Compression.ZipReader(Build.asDocument(noDimensionBuilder).body).getEntriesMap()
-                                                    );
+       Object[][][] documentResultNd                    = Parse.toArray(
+                                                            new Compression.ZipReader(Build.asDocument(noDimensionBuilder).body).getEntriesMap()
+                                                        );
 
-        Object[][][] contentVersionResultNd         = Parse.toArray(
-                                                        new Compression.ZipReader(Build.asContentVersion(noDimensionBuilder).VersionData).getEntriesMap(),
-                                                        new Set<Integer>{0,2}
-                                                    );
+        Object[][][] contentVersionResultNd             = Parse.toArray(
+                                                            new Compression.ZipReader(Build.asContentVersion(noDimensionBuilder).VersionData).getEntriesMap(),
+                                                            new Set<Integer>{0,2}
+                                                        );
 
-        Object[][][] documentResultDomDocNd         = Parse.toArrayDomDoc(
-                                                        new Compression.ZipReader(Build.asDocument(noDimensionBuilder).body).getEntriesMap()
-                                                    );
+        Object[][][] documentResultDomDocNd             = Parse.toArrayDomDoc(
+                                                            new Compression.ZipReader(Build.asDocument(noDimensionBuilder).body).getEntriesMap()
+                                                        );
 
-        Object[][][] contentVersionResultDomDocNd   = Parse.toArrayDomDoc(
-                                                        new Compression.ZipReader(Build.asContentVersion(noDimensionBuilder).VersionData).getEntriesMap(),
-                                                        new Set<Integer>{0,2}
-                                                    );
+        Object[][][] contentVersionResultDomDocNd       = Parse.toArrayDomDoc(
+                                                            new Compression.ZipReader(Build.asContentVersion(noDimensionBuilder).VersionData).getEntriesMap(),
+                                                            new Set<Integer>{0,2}
+                                                        );
         
-        Object[][][] documentResultIvNd             = Parse.toArrayInverted(
-                                                        new Compression.ZipReader(Build.asDocument(noDimensionBuilder).body).getEntriesMap()
-                                                    );
+        Object[][][] documentResultIvNd                 = Parse.toArrayInverted(
+                                                            new Compression.ZipReader(Build.asDocument(noDimensionBuilder).body).getEntriesMap()
+                                                        );
 
-        Object[][][] contentVersionResultIvNd       = Parse.toArrayInverted(
-                                                        new Compression.ZipReader(Build.asContentVersion(noDimensionBuilder).VersionData).getEntriesMap(),
-                                                        new Set<Integer>{0,2}
-                                                    );
+        Object[][][] contentVersionResultIvNd           = Parse.toArrayInverted(
+                                                            new Compression.ZipReader(Build.asContentVersion(noDimensionBuilder).VersionData).getEntriesMap(),
+                                                            new Set<Integer>{0,2}
+                                                        );
 
-        Object[][][] documentResultDomDocIvNd       = Parse.toArrayInvertedDomDoc(
-                                                        new Compression.ZipReader(Build.asDocument(noDimensionBuilder).body).getEntriesMap()
-                                                    );
+        Object[][][] documentResultDomDocIvNd           = Parse.toArrayInvertedDomDoc(
+                                                            new Compression.ZipReader(Build.asDocument(noDimensionBuilder).body).getEntriesMap()
+                                                        );
 
-        Object[][][] contentVersionResultDomDocIvNd = Parse.toArrayInvertedDomDoc(
-                                                        new Compression.ZipReader(Build.asContentVersion(noDimensionBuilder).VersionData).getEntriesMap(),
-                                                        new Set<Integer>{0,2}
-                                                    );                                                
+        Object[][][] contentVersionResultDomDocIvNd     = Parse.toArrayInvertedDomDoc(
+                                                            new Compression.ZipReader(Build.asContentVersion(noDimensionBuilder).VersionData).getEntriesMap(),
+                                                            new Set<Integer>{0,2}
+                                                        );    
+               
+        // Additional formatting (reuses logic so requires less tests)
+        Map<String,Object[][]> arrayMapResult01         = Parse.toSheetNameArrayMap(
+                                                            new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap()
+                                                        );
+
+        Map<String,Object[][]> arrayMapResult02         = Parse.toSheetNameArrayMap(
+                                                            new Compression.ZipReader(Build.asContentVersion(noDimensionBuilder).VersionData).getEntriesMap(),
+                                                            new Set<Integer>{0,2}
+                                                        );
+        Map<String,Object[][]> arrayMapResultIv01       = Parse.toSheetNameArrayInvertedMap(
+                                                            new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap()
+                                                        );
+
+        Map<String,Object[][]> arrayMapResultIv02       = Parse.toSheetNameArrayInvertedMap(
+                                                            new Compression.ZipReader(Build.asContentVersion(noDimensionBuilder).VersionData).getEntriesMap(),
+                                                            new Set<Integer>{0,2}
+                                                        );
+
         Test.stopTest();
 
         // Validate we have the correct number of worksheets
@@ -181,6 +234,14 @@ private with sharing class ParseTest {
         Assert.areEqual(2,contentVersionResultIvNd.size(),      'Unexpected number of worksheets');
         Assert.areEqual(3,documentResultDomDocIvNd.size(),      'Unexpected number of worksheets');
         Assert.areEqual(2,contentVersionResultDomDocIvNd.size(),'Unexpected number of worksheets');
+
+        // Validate additional formatting (reuses logic)
+        Assert.areEqual(3,arrayMapResult01.size(),              'Unexpected number of worksheets');
+        Assert.areEqual(2,arrayMapResult02.size(),              'Unexpected number of worksheets');
+        Assert.areEqual(3,arrayMapResultIv01.size(),            'Unexpected number of worksheets');
+        Assert.areEqual(2,arrayMapResultIv02.size(),            'Unexpected number of worksheets');
+
+
 
         // Iterate all worksheets in all results and validate their output
         for (Integer i = 0, max=documentResult.size(); i < max; i++) {
@@ -333,6 +394,15 @@ private with sharing class ParseTest {
     }
 
 
+    /** **************************************************************************************************** **
+     **                                        GLOBAL LLM TEXT METHODS                                       **
+     ** **************************************************************************************************** **/
+    @IsTest
+    private static void testToLlmText(){
+
+    }
+
+    
     /** **************************************************************************************************** **
      **                                             OTHER METHODS                                            **
      ** **************************************************************************************************** **/
