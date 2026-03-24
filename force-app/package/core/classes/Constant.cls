@@ -13,30 +13,31 @@ public with sharing class Constant {
      **                                            SAFE TO UPDATE                                            **
      ** **************************************************************************************************** **/
     // Static application info (Safe to update)
-    public static final String  APP_NAME     = 'Lightweight - XLSX Builder';
-    public static final Integer REVISION     = 0;
-    public static final String  CREATOR      = UserInfo.getFirstName() + ' ' + UserInfo.getLastName();
-    public static final String  COMPANY_NAME = UserInfo.getOrganizationName();
+    public static final String  APP_NAME                    = 'Lightweight - XLSX Builder';
+    public static final Integer REVISION                    = 0;
+    public static final String  CREATOR                     = UserInfo.getFirstName() + ' ' + UserInfo.getLastName();
+    public static final String  COMPANY_NAME                = UserInfo.getOrganizationName();
 
     // Switch between inline strings in cells and the shared strings
     // Setting this to true can be beneficial for sheets that have lots of shared values
-    public static final Boolean DEF_SHARED_STRINGS      = true;
+    public static final Boolean DEF_SHARED_STRINGS          = true;
 
     // Include the default styles, handy for testing or company default
-    public static final Boolean DEF_INCLUDE_STYLES      = false;
+    public static final Boolean DEF_INCLUDE_STYLES          = false;
 
     // (Error) Messages
-    public static final String  MSG_INVALID_WS_NAME     = 'Worksheet name cannot be blank or exceed 31 characters in length';
-    public static final String  MSG_DUPLICATE_WORKSHEET = 'A worksheet with the name "{0}" already exists in the builder.';
-    public static final String  MSG_INVALID_CELL_NAME   = 'Invalid cell name: "{0}"';
-    public static final String  MSG_INVALID_ZIP_ENTRY   = 'The file name "{0}" does not exist in the zip entries map.';
-    public static final String  MSG_NO_DIMENSION_ATTR   = 'The worksheet does not contain the "dimension" attribute. To use the "toArray()" methods, this attribute is required. Please use the "toMap()" methods. This often happens with sheets created in Google Sheets. A solution is on the roadmap.';
+    public static final String  MSG_INVALID_WS_NAME         = 'Worksheet name cannot be blank or exceed 31 characters in length';
+    public static final String  MSG_DUPLICATE_WORKSHEET     = 'A worksheet with the name "{0}" already exists in the builder.';
+    public static final String  MSG_INVALID_CELL_NAME       = 'Invalid cell name: "{0}"';
+    public static final String  MSG_INVALID_ZIP_ENTRY       = 'The file name "{0}" does not exist in the zip entries map.';
+    public static final String  MSG_NO_DIMENSION_ATTR       = 'The worksheet does not contain the "dimension" attribute. To use the "toArray()" methods, this attribute is required. Please use the "toMap()" methods. This often happens with sheets created in Google Sheets. A solution is on the roadmap.';
+    public static final String  MSG_STATIC_RESOURCE_ERROR   = 'No static resource with the name "{0}" found in the metadata';
 
 
     /** **************************************************************************************************** **
      **                                          !! DO NOT TOUCH !!                                          **
      ** **************************************************************************************************** **/
-    // Current timestamp that is used throughout the sheet
+    // Current timestamp that is used throughout the sheet for consistency
     public static final DateTime NOW                = Datetime.now();
 
     // Formatted output of the timestamp

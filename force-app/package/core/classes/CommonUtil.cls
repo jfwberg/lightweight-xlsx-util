@@ -120,4 +120,37 @@ global with sharing class CommonUtil {
         return Constant.NOW.format(Constant.TIMESTAMP_FORMAT);
     }
 
+
+    /** **************************************************************************************************** **
+     **                                     GLOBAL TEST UTILITY METHODS                                     **
+     ** **************************************************************************************************** **/
+    /**
+     * @description Method to get a text body from a static resource
+     *              Ideal if you have stored cert data (temporarily) in a static resource or during
+     *              apex tests
+     * @param       staticResourceName   The developer name of the static resource you want the body
+     *                                   value from
+     * @return      Static resource body
+     * @throws      InvalidDataException There is an issue with the static resource
+     */
+    global static String getStaticResourceBody(String staticResourceName){
+        try{
+            return ([SELECT Body FROM StaticResource WHERE Name = :staticResourceName WITH USER_MODE LIMIT 1]?.Body)?.toString();
+        }catch(System.QueryException e){
+            throw new InvalidDataException(String.format(Constant.MSG_STATIC_RESOURCE_ERROR, new String[]{staticResourceName}));
+        }
+    }
+
+
+    /** **************************************************************************************************** **
+     **                                      GLOBAL EXCEPTION CLASSES                                        **
+     ** **************************************************************************************************** **/
+    /**
+     * @description An exception that is thrown when something goes wrong retrieving
+     *              any (meta) data
+     * @note        This class is private and test visible as it should only be ever caught
+     *              when an Apex Unit Test is running and never from normal code
+     */
+    global with sharing class InvalidDataException extends Exception{}
+
 }
