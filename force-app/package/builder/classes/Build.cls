@@ -1,7 +1,7 @@
 /**
  * @author         Justus van den Berg (jfwberg@gmail.com)
  * @date           January 2025
- * @copyright      (c) 2025 Justus van den Berg
+ * @copyright      (c) 2026 Justus van den Berg
  * @license        MIT (See LICENSE file in the project root)
  * @description    Class that holds methods to create the XLSX file from a builder class instance
  * @false-positive AvoidGlobalModifier      This is a utility that is designed to be called from a

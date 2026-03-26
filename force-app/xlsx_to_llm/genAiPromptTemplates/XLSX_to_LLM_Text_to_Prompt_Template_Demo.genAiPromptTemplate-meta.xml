@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GenAiPromptTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <activeVersionIdentifier>kG17UU7y5oDONe+LdBTwgmQytLFaWWoYcfMrTMnTr4A=_1</activeVersionIdentifier>
+    <description>A prompt template specifically built to analyse XLSX files that have been converted using the Lightweight - XLSX Util&apos;s toLlmText() methods.</description>
+    <developerName>XLSX_to_LLM_Text_to_Prompt_Template_Demo</developerName>
+    <masterLabel>XLSX to LLM Text to Prompt Template Demo</masterLabel>
+    <overridable>false</overridable>
+    <templateVersions>
+        <content>{!$Input:LLM_Text}
+{!$Input:Instructions}
+</content>
+        <inputs>
+            <apiName>LLM_Text</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>LLM Text</masterLabel>
+            <referenceName>Input:LLM_Text</referenceName>
+            <required>true</required>
+        </inputs>
+        <inputs>
+            <apiName>Instructions</apiName>
+            <definition>primitive://String</definition>
+            <masterLabel>Instructions</masterLabel>
+            <referenceName>Input:Instructions</referenceName>
+            <required>true</required>
+        </inputs>
+        <primaryModel>sfdc_ai__DefaultGPT52</primaryModel>
+        <status>Published</status>
+        <versionIdentifier>kG17UU7y5oDONe+LdBTwgmQytLFaWWoYcfMrTMnTr4A=_1</versionIdentifier>
+    </templateVersions>
+    <type>einstein_gpt__flex</type>
+    <visibility>Global</visibility>
+</GenAiPromptTemplate>

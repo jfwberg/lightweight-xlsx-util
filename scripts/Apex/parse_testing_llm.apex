@@ -8,30 +8,18 @@ try{
     // 015Ae00000A6g5LIAR 100 k
     // 015Ae00000A6g6sIAB 150 k
     // 015Ae00000A6e9tIAB 200 k
-    
-    
-    
+    // 015Pt000009754DIAQ
 
     // As data map list
-    Object llmText = xlsx.Parse.toLlmText(
+    Object llmText = xlsx.Parse.toMap(
         new Compression.ZipReader(
-            [SELECT body FROM Document WHERE Id = '015Ae00000A6g5LIAR' LIMIT 1]?.Body
+            //[SELECT VersionData FROM ContentVersion WHERE ContentDocumentId = '069Pt000008RSzjIAG' AND IsLatest = true LIMIT 1]?.VersionData
+            [SELECT body FROM Document WHERE Id = '015Pt000009754DIAQ' LIMIT 1]?.Body
         ).getEntriesMap()
     );
 
-    System.debug(llmText);
     
     
-
-// Catch a Zip Specific Exception
-}catch(Compression.ZipException e){
-    System.debug('ZIP EXCEPTION: ' + e.getMessage());
-
-// Catch an XLSX Parser Specific Exception
-}catch(xlsx.ParseException e){
-    System.debug('PARSE EXCEPTION: ' + e.getMessage());
-    
-// Catch and handle any other type of Exception
 }catch(Exception e){
     System.debug('UNKNOWN EXCEPTION: ' + e.getMessage() + e.getStackTraceString());
 }

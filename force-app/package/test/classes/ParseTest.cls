@@ -1,7 +1,7 @@
 /**
  * @author         Justus van den Berg (jfwberg@gmail.com)
  * @date           January 2025
- * @copyright      (c) 2025 Justus van den Berg
+ * @copyright      (c) 2026 Justus van den Berg
  * @license        MIT (See LICENSE file in the project root)
  * @description    Test class for the Parse and Build classes
  * @tests          Parse
@@ -24,7 +24,7 @@ private with sharing class ParseTest {
         Builder b = new Builder();
         b.addWorksheet('Worksheet 01');
         b.addWorksheet('Worksheet 02');
-        
+
         // Build the archive as document and content version
         Blob documentData       = Build.asDocument(b).body;
         Blob contentVersionData = Build.asContentVersion(b).VersionData;
@@ -41,18 +41,18 @@ private with sharing class ParseTest {
         Assert.areEqual(1, indexMap2.get('Worksheet 02'), 'Unexpected sheet name');
     }
 
-    
+
     /**
      * @description Test Method for the worksheet name to index logic exception
      */
     @IsTest
     private static void testToWorksheetNameIndexMapException(){
-        
+
         // Create invalid archive
         Compression.ZipWriter zw = new Compression.ZipWriter();
         zw.addEntry('invalid.txt', Blob.valueOf('Some text'));
         Blob archive = zw.getArchive();
-        
+
         // Run the test
         try{
             Parse.toWorksheetNameIndexMap(new Compression.ZipReader(archive).getEntriesMap());
@@ -77,14 +77,14 @@ private with sharing class ParseTest {
         Builder b = new Builder();
         b.addWorksheet('Worksheet 01');
         b.addWorksheet('Worksheet 02');
-        
+
         // Build the archive as document and content version
         Blob documentData       = Build.asDocument(b).body;
         Blob contentVersionData = Build.asContentVersion(b).VersionData;
 
         Test.startTest();
         Map<Integer,String> indexMap1 = Parse.toWorksheetIndexNameMap(new Compression.ZipReader(documentData).getEntriesMap());
-        
+
         // Only select the second sheet
         Map<Integer,String> indexMap2 = Parse.toWorksheetIndexNameMap(new Compression.ZipReader(contentVersionData).getEntriesMap(), new Set<Integer>{1});
         Test.stopTest();
@@ -92,7 +92,7 @@ private with sharing class ParseTest {
         // Assert the indexes are correct
         Assert.areEqual(indexMap1.get(0), 'Worksheet 01', 'Unexpected sheet index');
         Assert.areEqual(indexMap1.get(1), 'Worksheet 02', 'Unexpected sheet index');
-        
+
         // The second sheet is selected and should have index 0 as it is the only one
         Assert.areEqual(indexMap2.get(0), 'Worksheet 02', 'Unexpected sheet index');
     }
@@ -106,7 +106,7 @@ private with sharing class ParseTest {
      */
     @IsTest
     private static void testToArray() {
-        
+
         // Create a new builder
         Builder b = new Builder();
 
@@ -115,11 +115,11 @@ private with sharing class ParseTest {
         noDimensionBuilder.addWorksheet('Worksheet 01', false);
         noDimensionBuilder.addWorksheet('Worksheet 02', false);
         noDimensionBuilder.addWorksheet('Worksheet 03', false);
-        
+
         // Create the test data
         populateWorksheets(b);
         populateWorksheets(noDimensionBuilder);
-        
+
         // Execute the tests
         Test.startTest();
         Object[][][] documentResult                     = Parse.toArray(
@@ -139,7 +139,7 @@ private with sharing class ParseTest {
                                                             new Compression.ZipReader(Build.asContentVersion(b).VersionData).getEntriesMap(),
                                                             new Set<Integer>{0,2}
                                                         );
-        
+
         Object[][][] documentResultIv                   = Parse.toArrayInverted(
                                                             new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap()
                                                         );
@@ -175,7 +175,7 @@ private with sharing class ParseTest {
                                                             new Compression.ZipReader(Build.asContentVersion(noDimensionBuilder).VersionData).getEntriesMap(),
                                                             new Set<Integer>{0,2}
                                                         );
-        
+
         Object[][][] documentResultIvNd                 = Parse.toArrayInverted(
                                                             new Compression.ZipReader(Build.asDocument(noDimensionBuilder).body).getEntriesMap()
                                                         );
@@ -192,8 +192,8 @@ private with sharing class ParseTest {
         Object[][][] contentVersionResultDomDocIvNd     = Parse.toArrayInvertedDomDoc(
                                                             new Compression.ZipReader(Build.asContentVersion(noDimensionBuilder).VersionData).getEntriesMap(),
                                                             new Set<Integer>{0,2}
-                                                        );    
-               
+                                                        );
+
         // Additional formatting (reuses logic so requires less tests)
         Map<String,Object[][]> arrayMapResult01         = Parse.toSheetNameArrayMap(
                                                             new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap()
@@ -282,7 +282,7 @@ private with sharing class ParseTest {
         for (Integer i = 0, max=contentVersionResultDomDocIv.size(); i < max; i++) {
             validateCellValuesInArray(contentVersionResultDomDocIv[i]);
         }
-        
+
         // Iterate all worksheets in all results and validate their output
         for (Integer i = 0, max=documentResultNd.size(); i < max; i++) {
             validateCellValuesInArray(documentResultNd[i]);
@@ -333,18 +333,18 @@ private with sharing class ParseTest {
      */
     @IsTest
     private static void testToMap() {
-        
+
         // Create a new builder
         Builder b = new Builder();
-        
+
         // Test that the keywords get cropped at 255 characters
         for (Integer i = 0; i < 30; i++) {
             b.addKeyword('1234567890');
         }
-        
+
         // Create the test data
         populateWorksheets(b);
-        
+
         // Execute the tests
         Test.startTest();
         List<Map<String,Object>> documentResult             = Parse.toMap(
@@ -390,7 +390,7 @@ private with sharing class ParseTest {
         // Iterate all worksheets in all results and validate their output
         for (Integer i = 0, max=contentVersionResultDomDoc.size(); i < max; i++) {
             validateCellValuesInMap(contentVersionResultDomDoc[i]);
-        } 
+        }
     }
 
 
@@ -400,9 +400,25 @@ private with sharing class ParseTest {
     @IsTest
     private static void testToLlmText(){
 
+        // Create a new builder
+        Builder b = new Builder();
+
+        // Create the test data
+        populateWorksheets(b);
+
+        // Execute the tests
+        Test.startTest();
+        String llmTextResult = Parse.toLlmText(new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap());
+        Test.stopTest();
+
+        Assert.areEqual(
+            'SHEET=Sheet1\nR1^C1=A1\nR2^C2=B2\nR3^C3=123.45\nR4^C4=678.90\nR5^C5=100\nR6^C6=200\nR7^C7=true\nR8^C8=false\nR9^C9=19\nR10^C10=20\nSHEET=Sheet2\nR1^C1=A1\nR2^C2=B2\nR3^C3=123.45\nR4^C4=678.90\nR5^C5=100\nR6^C6=200\nR7^C7=true\nR8^C8=false\nR9^C9=19\nR10^C10=20\nSHEET=Sheet3\nR1^C1=A1\nR2^C2=B2\nR3^C3=123.45\nR4^C4=678.90\nR5^C5=100\nR6^C6=200\nR7^C7=true\nR8^C8=false\nR9^C9=19\nR10^C10=20',
+            llmTextResult,
+            'Unexpected LLM Text Output'
+        );
     }
 
-    
+
     /** **************************************************************************************************** **
      **                                             OTHER METHODS                                            **
      ** **************************************************************************************************** **/
@@ -411,14 +427,14 @@ private with sharing class ParseTest {
      */
     @IsTest
     private static void testInlineStrings() {
-        
+
         // Create a new builder
         Builder b = new Builder();
-        
+
         // Use inline strings
         b.setUseSharedStrings(false);
         b.addTextCell(0, 0, 0, 'Lalalalala');
-        
+
         // Execute the tests
         Test.startTest();
 
@@ -439,7 +455,7 @@ private with sharing class ParseTest {
         Assert.areEqual(1, arrayResult.size(),   'Unexpected number of worksheets');
         Assert.areEqual(1, arrayResultIv.size(), 'Unexpected number of worksheets');
         Assert.areEqual(1, mapResult.size(),     'Unexpected number of worksheets');
-        
+
         // Validate cell values
         Assert.areEqual('Lalalalala',   arrayResult[0][0][0].toString(),   'Unexpected Cell value');
         Assert.areEqual('Lalalalala',   mapResult[0].get('A1').toString(), 'Unexpected Cell value');
@@ -474,7 +490,7 @@ private with sharing class ParseTest {
      * @param worksheet The rows and cells array for a specific worksheet
      */
     private static void validateCellValuesInArray(Object[][] worksheet){
-        
+
         // Validate the number of values
         Assert.areEqual(10, worksheet.size(),'Unexpected number of rows in worksheet');
 
@@ -497,7 +513,7 @@ private with sharing class ParseTest {
      * @param worksheet The rows and cells array for a specific worksheet
      */
     private static void validateCellValuesInMap(Map<String,Object> worksheet){
-        
+
         // Validate the number of values
         Assert.areEqual(10, worksheet.size(),'Unexpected number of rows in worksheet');
 

@@ -1,7 +1,7 @@
 /**
  * @author         Justus van den Berg (jfwberg@gmail.com)
  * @date           January 2025
- * @copyright      (c) 2025 Justus van den Berg
+ * @copyright      (c) 2026 Justus van den Berg
  * @license        MIT (See LICENSE file in the project root)
  * @description    Test class for the Common Utilities
  * @Tests          CommonUtil
@@ -94,4 +94,22 @@ private class CommonUtilTest {
         // Assert test values
         Assert.areEqual(Constant.NOW.format(Constant.TIMESTAMP_FORMAT), CommonUtil.getTimestampString(), 'Unexpected timestamp format');
     }
+
+    
+    /**
+     * @description Method to test the static resource utility
+     */
+    @IsTest
+    static void testGetStaticResourceBody(){
+        try{
+            CommonUtil.getStaticResourceBody('invalid');
+        }catch(CommonUtil.InvalidDataException e){
+            Assert.areEqual(
+                String.format(Constant.MSG_STATIC_RESOURCE_ERROR, new String[]{'invalid'}),
+                e.getMessage(),
+                'Unexpected Exception Message'
+            );
+        }
+	}
+
 }

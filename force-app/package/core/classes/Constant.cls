@@ -1,7 +1,7 @@
 /**
  * @author         Justus van den Berg (jfwberg@gmail.com)
  * @date           January 2025
- * @copyright      (c) 2025 Justus van den Berg
+ * @copyright      (c) 2026 Justus van den Berg
  * @license        MIT (See LICENSE file in the project root)
  * @description    Class containing all the static values that are used
  *                 to generate the various XML Files in the package
@@ -24,6 +24,9 @@ public with sharing class Constant {
 
     // Include the default styles, handy for testing or company default
     public static final Boolean DEF_INCLUDE_STYLES          = false;
+    
+    // Static resource file name for the default instructions
+    public static final String  LLM_DEF_INSTRUCTION_SR      = 'llm_default_instructions';
 
     // (Error) Messages
     public static final String  MSG_INVALID_WS_NAME         = 'Worksheet name cannot be blank or exceed 31 characters in length';
@@ -32,6 +35,9 @@ public with sharing class Constant {
     public static final String  MSG_INVALID_ZIP_ENTRY       = 'The file name "{0}" does not exist in the zip entries map.';
     public static final String  MSG_NO_DIMENSION_ATTR       = 'The worksheet does not contain the "dimension" attribute. To use the "toArray()" methods, this attribute is required. Please use the "toMap()" methods. This often happens with sheets created in Google Sheets. A solution is on the roadmap.';
     public static final String  MSG_STATIC_RESOURCE_ERROR   = 'No static resource with the name "{0}" found in the metadata';
+    public static final String  MSG_LLM_TEXT_UNKNOWN_ERROR  = 'An unexpected error occurred whilst processing the ContentDocument. Exception Message: "{0}"';
+    public static final String  MSG_FORCED_EXCEPTION        = 'This is a forced exception error message used for code coverage';
+    public static final String  MSG_XLSX_EXTENSION_EXCEPTION= 'The content document extension is invalid. Only the "xlsx" extension is supported';
 
 
     /** **************************************************************************************************** **

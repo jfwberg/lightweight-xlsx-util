@@ -1,7 +1,7 @@
 /**
  * @author         Justus van den Berg (jfwberg@gmail.com)
  * @date           January 2025
- * @copyright      (c) 2025 Justus van den Berg
+ * @copyright      (c) 2026 Justus van den Berg
  * @license        MIT (See LICENSE file in the project root)
  * @description    A class to holds an example of how you can parse an XLSX
  *                 worksheet data into a multi-dimensional array or into a list of maps
@@ -56,7 +56,7 @@ global with sharing class Parse{
         SheetIndex[] sheetIndexes = new SheetIndex[]{};
 
         // Create an XSR for the current worksheet XML file
-        XmlStreamReader xsr = new XmlStreamReader(entries.get(Constant.ZP_PATH_WORKBOOK).getContent().toString());
+        XmlStreamReader xsr = new XmlStreamReader(entries.get(Constant.ZP_PATH_WORKBOOK).getContent().toString().replace('\uFEFF', ''));
 
         // Traverse the XML elements in the worksheet
         // I am not using while(xsr.hasNext()) to save a method call at the end of each item
@@ -213,7 +213,7 @@ global with sharing class Parse{
             output.add(new Object[][]{});
 
             // Create an XSR for the current worksheet XML file
-            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString());
+            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', ''));
 
             // Set the current row to -1 so the indexes match
             Integer currentRi = -1;
@@ -295,7 +295,7 @@ global with sharing class Parse{
                             // the last column and rows based on iterating the entire sheet
                             if(!hasDimensionAttribute){
                                 ParseUtil.populateColumnIndexMapWithoutDimensionAttribute(
-                                    new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString()),
+                                    new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', '')),
                                     currentWi,
                                     output,
                                     false // Inverted
@@ -579,7 +579,7 @@ global with sharing class Parse{
             output.add(new Object[][]{});
 
             // Create an XSR for the current worksheet XML file
-            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString());
+            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', ''));
 
             // Set the current row to -1 so the indexes match
             Integer currentRi = -1;
@@ -661,7 +661,7 @@ global with sharing class Parse{
                             // the last column. Until that fix just throw an exception
                             if(!hasDimensionAttribute){
                                 ParseUtil.populateColumnIndexMapWithoutDimensionAttribute(
-                                    new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString()),
+                                    new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', '')),
                                     currentWi,
                                     output,
                                     true // Inverted
@@ -942,7 +942,7 @@ global with sharing class Parse{
             output.add(new Map<String,Object>());
 
             // Create an XSR for the current worksheet XML file
-            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString());
+            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', ''));
 
             // Variables to hold the type and name of the current open cell element
             String cellName;
@@ -1143,11 +1143,28 @@ global with sharing class Parse{
     }
 
 
+    /**
+     * @description Method that takes an unzipped xlsx archive as parameter and
+     *              returns the sheet data as a map of sheet name to 2D Object[][]
+     *              (column-major order) but putting it in a map using the sheet names
+     * @author 
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @return                A map with the sheet name as key and the 2D Object[][] as value
+     */
     global static Map<String, Object[][]> toSheetNameArrayInvertedMap(Map<String, Compression.ZipEntry> entries){
         return toSheetNameArrayInvertedMap(entries,null);
     }
 
 
+    /**
+     * @description Method that takes an unzipped xlsx archive as parameter and
+     *              returns the sheet data as a map of sheet name to 2D Object[][]
+     *              (column-major order) but putting it in a map using the sheet names
+     * @author 
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @param  selectedSheets A set of integers representing the sheet indexes to parse
+     * @return                A map with the sheet name as key and the 2D Object[][] as value
+     */
     global static Map<String, Object[][]> toSheetNameArrayInvertedMap(Map<String, Compression.ZipEntry> entries, Set<Integer> selectedSheets){
 
         // Create the map for the output
@@ -1168,7 +1185,6 @@ global with sharing class Parse{
         // Return the formatted data
         return sheetNameArrayMap;
     }
-
 
   
     /** **************************************************************************************************** **
@@ -1234,7 +1250,7 @@ global with sharing class Parse{
             );
 
             // Create an XSR for the current worksheet XML file
-            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString());
+            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', ''));
 
             // Variables to hold the type and name of the current open cell element
             String cellName;
@@ -1246,6 +1262,9 @@ global with sharing class Parse{
             // Keep track of current column number
             Integer currentColumnNumber = null;
 
+            Integer rowCounter    = -1;
+            Integer columnCounter = -1;
+
             // Map that holds the caching between used column names i.e. A, AB, AAB etc. so its doesnt have to be calculated again
             Map<string,Integer> columnNameNumberMap = new Map<string,Integer>();
 
@@ -1256,32 +1275,46 @@ global with sharing class Parse{
 
                         // The row element
                         when 'row' {
+                            
+                            // Increase the current row count (in case no r element exists)
+                            rowCounter++;
 
+                            // Reset the column counter for the current row (in case no r element exists)
+                            columnCounter = -1;
+                            
                             // Ignore when there is no row yet or the row has no cells in it
                             if(currentRowParts.size() > 1){
                                 output.add(String.join(currentRowParts,'^'));
                             }
                             
                             // Add the current row token and the row number
-                            currentRowParts = new String[]{ 'R' + xsr.getAttributeValue(null, 'r') };
+                            currentRowParts = new String[]{ 'R' + (xsr.getAttributeValue(null, 'r') ?? rowCounter.toString()) };
                         }
 
                         // The cell element
                         when 'c' {
-                            
+                            // Increment the column counter for the current row
+                            columnCounter++;
+
+                            // Extract cell attributes
                             cellName = xsr.getAttributeValue(null, 'r');
                             cellType = xsr.getAttributeValue(null, 't');
 
-                            // Get the column name from the cell
-                            String columnName = ParseUtil.columnNameFromCellName(cellName);
+                            // If there is a cellname extract all the details, else just take the increment
+                            if(cellName != null){
+                                // Get the column name from the cell
+                                String columnName = ParseUtil.columnNameFromCellName(cellName);
 
-                            // Cache the column number based on the name
-                            if(!columnNameNumberMap.containsKey(columnName)){
-                                columnNameNumberMap.put(columnName, CommonUtil.columnNumberFromColumnName(columnName));
+                                // Cache the column number based on the name
+                                if(!columnNameNumberMap.containsKey(columnName)){
+                                    columnNameNumberMap.put(columnName, CommonUtil.columnNumberFromColumnName(columnName));
+                                }
+
+                                // Set the current column number
+                                currentColumnNumber = columnNameNumberMap.get(columnName);
+                            }else{
+                                currentColumnNumber = columnCounter;
                             }
-
-                            // Set the current column number
-                            currentColumnNumber = columnNameNumberMap.get(columnName);
                         }
 
                         // Value tags inside the cell element
@@ -1356,8 +1389,11 @@ global with sharing class Parse{
         if(entries.containsKey(Constant.ZP_PATH_SHRD_STRS)){
 
             // Create an XSR for the shared strings XML file
-            XmlStreamReader xsr = new XmlStreamReader(entries.get(Constant.ZP_PATH_SHRD_STRS).getContent().toString());
-
+            XmlStreamReader xsr = new XmlStreamReader(entries.get(Constant.ZP_PATH_SHRD_STRS).getContent().toString().replace('\uFEFF', ''));
+            
+            // Treat texts as blocks
+            xsr.setCoalescing(true);
+            
             // Traverse the XML elements in the worksheet
             // I am not using while(xsr.hasNext()) to save a method call at the end of each item
             // For some reason it's about 30% faster to put an if statement at the end. No idea why.

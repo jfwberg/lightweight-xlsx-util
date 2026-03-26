@@ -6,15 +6,19 @@
 **/appMenus/**
 **/objectTranslations/**
 **/connectedApps/**
-**/flows/**
 **/zippex/**
+**/layouts/**
+**/flexipages/**
+**/objects/**
+**/permissionsets/**
 
 # Comment when deploying the connection
-#**/customMetadata/**
+**/customMetadata/**
 **/namedCredentials/**
 **/externalCredentials/**
 **/authproviders/**
 **/remoteSiteSettings/**
+
 
 # LWC configuration files
 **/jsconfig.json
@@ -23,4 +27,4 @@
 # LWC Jest
 **/__tests__/**
 
-**/main/**
+#**/main/**

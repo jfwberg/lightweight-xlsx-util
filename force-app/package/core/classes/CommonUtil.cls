@@ -1,7 +1,7 @@
 /**
  * @author         Justus van den Berg (jfwberg@gmail.com)
  * @date           January 2025
- * @copyright      (c) 2025 Justus van den Berg
+ * @copyright      (c) 2026 Justus van den Berg
  * @license        MIT (See LICENSE file in the project root)
  * @description    Class that holds a set of common utilities that a developer can use
  *                 when creating XLSX files that are slightly more complex
@@ -135,7 +135,7 @@ global with sharing class CommonUtil {
      */
     global static String getStaticResourceBody(String staticResourceName){
         try{
-            return ([SELECT Body FROM StaticResource WHERE Name = :staticResourceName WITH USER_MODE LIMIT 1]?.Body)?.toString();
+            return ([SELECT Body FROM StaticResource WHERE Name = :staticResourceName WITH USER_MODE LIMIT 1].Body)?.toString();
         }catch(System.QueryException e){
             throw new InvalidDataException(String.format(Constant.MSG_STATIC_RESOURCE_ERROR, new String[]{staticResourceName}));
         }

@@ -1,7 +1,7 @@
 /**
  * @author      Justus van den Berg (jfwberg@gmail.com)
  * @date        January 2025
- * @copyright   (c) 2025 Justus van den Berg
+ * @copyright   (c) 2026 Justus van den Berg
  * @license     MIT (See LICENSE file in the project root)
  * @description Basic performance test to read an XLXS file using the XLSXParser class.
  *              iterate all results and execute a sample action on each cell to have some
@@ -47,7 +47,7 @@ public with sharing class ParserPerformanceTest {
             ).getEntriesMap()
         );
 
-        System.debug(JSON.serializePretty(xlsxDataArray));
+        
 
         // Register end time
         Decimal pt = Limits.getCpuTime();
