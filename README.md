@@ -18,15 +18,17 @@ The library comes with the most common functionalities like freezing rows, mergi
 |---|---|---|---|
 |Name|Lightweight - XLSX Util||
 |Version|0.7.0||
-|**Managed** | `sf package install --wait 30 --security-type AllUsers --package 04tP3000001EprhIAC` | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001EprhIAC) | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001EprhIAC)|
-|**Unlocked**| `sf package install --wait 30 --security-type AllUsers --package 04tP3000001EptJIAS` | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP3000001EptJIAS)          | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP3000001EptJIAS)|
+|**Managed** | <li>`sf package install --wait 30 --security-type AllUsers --package 04tP3000001EprhIAC`</li><li>`/packaging/installPackage.apexp?p0=04tP3000001EprhIAC`</li> | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001EprhIAC) | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001EprhIAC)|
+|**Unlocked**| <li>`sf package install --wait 30 --security-type AllUsers --package 04tP3000001EptJIAS`</li><li>`/packaging/installPackage.apexp?p0=04tP3000001EptJIAS`</li> | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP3000001EptJIAS)          | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP3000001EptJIAS)|
+
+
 
 ## Optional LLM Util Package Info
 | Info | Value | ||
 |---|---|---|---|
 |Name|Lightweight - XLSX to LLM Util||
 |Version|0.1.0||
-|**Managed** | `sf package install --wait 30 --security-type AllUsers --package 04tP3000001EprhIAC` | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001ouBJIAY) | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001ouBJIAY)|
+|**Managed** | <li>`sf package install --wait 30 --security-type AllUsers --package 04tP3000001ouBJIAY`</li><li>`/packaging/installPackage.apexp?p0=04tP3000001ouBJIAY`</li> | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001ouBJIAY) | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001ouBJIAY)|
 
 ## Parse Excel files
 Parsing is done using the `Parse` class in the `xlsx` namespace. We can parse to two different formats: a *multi dimensional array* or a *list of maps*. In the array format the first list represents the worksheet, the child the rows and the grand child the cells.
@@ -143,8 +145,10 @@ Note: This is very CPU intensive so massive files are not really supported.
 
 |Return type| Method signature| Use for |
 |---|---|---|
-| `String`      |`xlsx.Parse.toLlmText(Map<String,Compression.ZipEntry> entries)`                              | You need to convert the output to an LLM fiendly format  |
-| `String`      |`xlsx.Parse.toLlmText(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets)` | You need to convert the output to an LLM fiendly format, specific sheets only |
+| `String` |`xlsx.Parse.toLlmText(Map<String,Compression.ZipEntry> entries)`                                    | Medium Files, You need to convert the output to an LLM fiendly format  |
+| `String` |`xlsx.Parse.toLlmText(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets)`       | Medium Files, You need to convert the output to an LLM fiendly format, specific sheets only |
+| `String` |`xlsx.Parse.toLlmTextDomDoc(Map<String,Compression.ZipEntry> entries)`                              | Small Files,  You need to convert the output to an LLM fiendly format, specific sheets only |
+| `String` |`xlsx.Parse.toLlmTextDomDoc(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets)` | Small Files,  You need to convert the output to an LLM fiendly format, specific sheets only |
 
 
 ## Build Methods
@@ -253,6 +257,7 @@ The [`examples folder`](examples) contains a number of example implementation fo
 |[12_Parse_Attachment.apex](examples/parser/12_Parse_Attachment.apex)               | Example to parse a an XLSX file stored as ContentVersion Object   ||
 |[13_Parse_To_CSV.apex](examples/parser/13_Parse_To_CSV.apex)                       | Example to parse a an XLSX file and convert it to a CSV file (one for each worksheet)        ||
 |[14_Parse_To_sObject_List.apex](examples/parser/14_Parse_To_sObject_List.apex)     | Example to parse a an XLSX to an sObject list. This allows you to handle the data as records ||
+|[15_Parse_To_LLM_Text.apex](examples/parser/15_Parse_To_LLM_Text.apex)             | Example to parse a an XLSX to an LLM Optimised output format ||
 
 ### Build Examples
 |File| Description | Additional Info|

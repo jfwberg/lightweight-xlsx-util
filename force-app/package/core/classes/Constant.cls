@@ -82,7 +82,8 @@ public with sharing class Constant {
     public static final Pattern  CELL_RANGE_PATTERN  = Pattern.compile(CELL_RANGE_REGEX);
 
     // Character Array to calculate column names
-    public static final String[] CHARS              = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    // Added a spacer ^ to prevent a calculation 
+    public static final String[] CHARS              = '^ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
     // Number array to reverse calculate the numbers column names
     public static final Map<String,Integer> NUMS    = new Map<String,Integer>{

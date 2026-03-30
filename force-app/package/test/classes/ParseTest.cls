@@ -402,19 +402,26 @@ private with sharing class ParseTest {
 
         // Create a new builder
         Builder b = new Builder();
-
+        
         // Create the test data
         populateWorksheets(b);
 
         // Execute the tests
         Test.startTest();
         String llmTextResult = Parse.toLlmText(new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap());
+        String llmTextResultDomDoc = Parse.toLlmTextDomDoc(new Compression.ZipReader(Build.asDocument(b).body).getEntriesMap());
         Test.stopTest();
 
         Assert.areEqual(
-            'SHEET=Sheet1\nR1^C1=A1\nR2^C2=B2\nR3^C3=123.45\nR4^C4=678.90\nR5^C5=100\nR6^C6=200\nR7^C7=true\nR8^C8=false\nR9^C9=19\nR10^C10=20\nSHEET=Sheet2\nR1^C1=A1\nR2^C2=B2\nR3^C3=123.45\nR4^C4=678.90\nR5^C5=100\nR6^C6=200\nR7^C7=true\nR8^C8=false\nR9^C9=19\nR10^C10=20\nSHEET=Sheet3\nR1^C1=A1\nR2^C2=B2\nR3^C3=123.45\nR4^C4=678.90\nR5^C5=100\nR6^C6=200\nR7^C7=true\nR8^C8=false\nR9^C9=19\nR10^C10=20',
+            'SHEET=Sheet1\nMERGE=R2^R11:C11^C16\nR1^C1=A1\nR2^C2=B2\nR3^C3=123.45\nR4^C4=678.90\nR5^C5=100\nR6^C6=200\nR7^C7=true\nR8^C8=false\nR9^C9=19\nR10^C10=20\nSHEET=Sheet2\nMERGE=R2^R11:C11^C16\nR1^C1=A1\nR2^C2=B2\nR3^C3=123.45\nR4^C4=678.90\nR5^C5=100\nR6^C6=200\nR7^C7=true\nR8^C8=false\nR9^C9=19\nR10^C10=20\nSHEET=Sheet3\nMERGE=R2^R11:C11^C16\nR1^C1=A1\nR2^C2=B2\nR3^C3=123.45\nR4^C4=678.90\nR5^C5=100\nR6^C6=200\nR7^C7=true\nR8^C8=false\nR9^C9=19\nR10^C10=20',
             llmTextResult,
             'Unexpected LLM Text Output'
+        );
+
+        Assert.areEqual(
+            'SHEET=Sheet1\nMERGE=R2^R11:C11^C16\nR1^C1=A1\nR2^C2=B2\nR3^C3=123.45\nR4^C4=678.90\nR5^C5=100\nR6^C6=200\nR7^C7=true\nR8^C8=false\nR9^C9=19\nR10^C10=20\nSHEET=Sheet2\nMERGE=R2^R11:C11^C16\nR1^C1=A1\nR2^C2=B2\nR3^C3=123.45\nR4^C4=678.90\nR5^C5=100\nR6^C6=200\nR7^C7=true\nR8^C8=false\nR9^C9=19\nR10^C10=20\nSHEET=Sheet3\nMERGE=R2^R11:C11^C16\nR1^C1=A1\nR2^C2=B2\nR3^C3=123.45\nR4^C4=678.90\nR5^C5=100\nR6^C6=200\nR7^C7=true\nR8^C8=false\nR9^C9=19\nR10^C10=20',
+            llmTextResultDomDoc,
+            'Unexpected LLM Text DOM DOC Output'
         );
     }
 
@@ -481,6 +488,7 @@ private with sharing class ParseTest {
             b.addBooleanCell(i, 7, 7, false,  0);
             b.addFormulaCell(i, 8, 8, 19,     '=SUM(9,10)'   );
             b.addFormulaCell(i, 9, 9, 20,     '=SUM(10,10)',0);
+            b.addMergeCell(i, 10, 1, 15, 10);
         }
     }
 

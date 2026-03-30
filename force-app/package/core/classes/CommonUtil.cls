@@ -14,6 +14,8 @@
 @SuppressWarnings('PMD.AvoidGlobalModifier, PMD.OneDeclarationPerLine')
 global with sharing class CommonUtil {
 
+    // Map holding the cache between the column name and the corresponding integer
+    private static Map<String,Integer> columnNameIntegerMap = new Map<String,Integer>();
 
     /**
      * @description Method to convert column index to column name
@@ -33,7 +35,7 @@ global with sharing class CommonUtil {
 
         // When less than 26 just return the letter
         if(columnNumber < 26 ){
-            return columnName = Constant.CHARS[columnNumber - 1];
+            return columnName = Constant.CHARS[columnNumber];
         }
 
         // As long as we have a remainder continue
@@ -47,7 +49,7 @@ global with sharing class CommonUtil {
                 columnName  +=('Z');
                 columnNumber = (columnNumber / 26) - 1;
             }else{
-                columnName  += Constant.CHARS[rem - 1] ;
+                columnName  += Constant.CHARS[rem] ;
                 columnNumber = columnNumber / 26;
             }
         }
@@ -65,6 +67,11 @@ global with sharing class CommonUtil {
      */
     global static Integer columnNumberFromColumnName(String columnName){
 
+        // Check the cache
+        if(columnNameIntegerMap.containsKey(columnName)){
+            return columnNameIntegerMap.get(columnName);
+        }
+
         // Split the column name so we can iterate each character
         String[] columnNameIndex = columnName.split('');
 
@@ -76,6 +83,11 @@ global with sharing class CommonUtil {
             result *= 26;
             result += Constant.NUMS.get(columnNameIndex[i]);
         }
+        
+        // Populate the map for reuse
+        columnNameIntegerMap.put(columnName,result);
+        
+        // Return the result
         return result;
     }
 

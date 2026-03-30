@@ -8,6 +8,7 @@ private class LlmTextTest {
         Builder b = new Builder();
         b.addTextCell(0, 0, 0, 'Value A1');
         b.addTextCell(1, 1, 1, 'Value B2');
+        b.addTextCell(2, 2, 2, 'Value\n^\rC3');
         
         // Create the blob
         ContentVersion cv = new ContentVersion();
@@ -28,7 +29,7 @@ private class LlmTextTest {
         Test.stopTest();
 
         Assert.areEqual(
-            'SHEET=Sheet1\nR1^C1=Value A1\nSHEET=Sheet2\nR2^C2=Value B2',
+            'SHEET=Sheet1\nR1^C1=Value A1\nSHEET=Sheet2\nR2^C2=Value B2\nSHEET=Sheet3\nR3^C3=Value   C3',
             results[0].llmText,
             'Unexpected LLM Response'
         );

@@ -1232,10 +1232,6 @@ global with sharing class Parse{
         // Keep track of skipped worksheets
         Integer worksheetSkipCount = 0;
 
-        // Map that holds the caching between used column names i.e. A, AB, AAB etc. so its doesnt have to be calculated again
-        // This cache applies to all worksheets, so it's above the loop
-        Map<string,Integer> columnNameNumberMap = new Map<string,Integer>();
-
         // Parse each worksheet in its own loop
         for(Integer wi = 0, wiMax = worksheetPaths.size(); wi < wiMax; wi++){
 
@@ -1275,11 +1271,10 @@ global with sharing class Parse{
 
             // Keep track of current column number
             Integer currentColumnNumber = null;
-
+            
+            // Counters for missing r attributes
             Integer rowCounter    = -1;
             Integer columnCounter = -1;
-
-            
 
             // Traverse the XML elements in the worksheet
             while(true) {
@@ -1318,13 +1313,8 @@ global with sharing class Parse{
                                 // Get the column name from the cell
                                 String columnName = ParseUtil.columnNameFromCellName(cellName);
 
-                                // Cache the column number based on the name
-                                if(!columnNameNumberMap.containsKey(columnName)){
-                                    columnNameNumberMap.put(columnName, CommonUtil.columnNumberFromColumnName(columnName));
-                                }
-
                                 // Set the current column number
-                                currentColumnNumber = columnNameNumberMap.get(columnName);
+                                currentColumnNumber = CommonUtil.columnNumberFromColumnName(columnName);
                             }else{
                                 currentColumnNumber = columnCounter;
                             }
@@ -1390,7 +1380,9 @@ global with sharing class Parse{
             // Add the worksheet merge cell info in the following format:
             // MERGE^R2^C3:C6 MERGE^R19:R20^C2:C3
             if(!mergeCells.isEmpty()){
+                
                 String[] mergeCellLines = new String[]{};
+                
                 for (Integer i = 0,max=mergeCells.size(); i < max; i++) {
                     
                     // Skip empty strings
@@ -1404,9 +1396,9 @@ global with sharing class Parse{
                         mergeCellLines.add(String.format(
                             'MERGE=R{0}^R{1}:C{2}^C{3}',
                             new Object[]{
-                                m.group(2),                                     // Start row
-                                m.group(4) != null ? m.group(4) : m.group(2),   // end row
-                                CommonUtil.columnNumberFromColumnName(m.group(1)),                                     // Start column
+                                m.group(2),                                         // Start row
+                                m.group(4) != null ? m.group(4) : m.group(2),       // end row
+                                CommonUtil.columnNumberFromColumnName(m.group(1)),  // Start column
                                 m.group(3) != null ? CommonUtil.columnNumberFromColumnName(m.group(3)) : CommonUtil.columnNumberFromColumnName(m.group(1))    // End Column
                             }
                         ));
@@ -1414,6 +1406,252 @@ global with sharing class Parse{
                 }
                 // Add the merge cell lines after the sheet data
                 output[mergeCellsIndex]=String.join(mergeCellLines,'\n');
+            }else{
+                // Remove the merge cells placeholder when there are no merge cells
+                // This prevents an empty line and yet the merge lines are in the correct place
+                output.remove(mergeCellsIndex);
+            }
+        }
+
+        // Return the fully populated output text
+        return String.join(output, '\n');
+    }
+
+
+    /**
+     * @description Method that takes an unzipped xlsx archive as parameter and
+     *              returns the sheet data in a custom LLM optimised format that converts
+     *              the sheets in column major order (i.e. as the sheet table)
+     *              Method uses the DOM class for XML Parsing what is faster but
+     *              more limited in maximum size
+     * @author 
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @return                An Custom LLM Text formatted representation of the data
+     */
+    global static String toLlmTextDomDoc(Map<String,Compression.ZipEntry> entries){
+        return toLlmTextDomDoc(entries,null);
+    }
+    
+
+    /**
+     * @description Method that takes an unzipped xlsx archive as parameter and
+     *              returns the sheet data in a custom LLM optimised format that converts
+     *              the sheets in column major order (i.e. as the sheet table)
+     *              Method uses the DOM class for XML Parsing what is faster but
+     *              more limited in maximum size
+     * @author 
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @param  selectedSheets A set of integers representing the sheet indexes to parse
+     * @return                An Custom LLM Text formatted representation of the data
+     */
+    global static String toLlmTextDomDoc(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets){
+
+        // Output lines for the full workbook
+        String[] output = new String[]{};
+
+        // Index for the sheet's merge cells in the output[] variable
+        Integer mergeCellsIndex;
+
+        // Create a list of shared strings
+        String[] sharedStrings = getSharedStrings(entries);
+
+        // In order to sort the worksheets, we need to put them in a list to sort
+        String[] worksheetPaths = getWorksheetPaths(entries);
+
+        // Get the names
+        Map<Integer,String> worksheetIndexNameMap = toWorksheetIndexNameMap(entries, selectedSheets);
+
+        // Keep track of skipped worksheets
+        Integer worksheetSkipCount = 0;
+
+        // Parse each worksheet in its own loop
+        for(Integer wi = 0, wiMax = worksheetPaths.size(); wi < wiMax; wi++){
+
+            // Skip sheets that are not included in the selectedSheets
+            if(selectedSheets != null && !selectedSheets.contains(wi)){
+                worksheetSkipCount++;
+                continue;
+            }
+
+            // Add the sheet marker
+            output.add(
+                String.join(
+                    new String[]{
+                        'SHEET=',
+                        worksheetIndexNameMap.get(wi - worksheetSkipCount)
+                    },
+                    ''
+                )
+            );
+
+            // Create a placeholder for the merge values
+            output.add('');
+            mergeCellsIndex = output.size() - 1;
+
+            // Create a DOM document for the current worksheet XML file
+            Dom.Document doc = new Dom.Document();
+            doc.load(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', ''));
+
+            // Get the root worksheet element
+            Dom.XmlNode root = doc.getRootElement();
+
+            // Keep a list of all merge cells in the sheet
+            String[] mergeCells = new String[]{};
+
+            // Keep track of current row state
+            String[] currentRowParts;
+
+            // Keep track of current column number
+            Integer currentColumnNumber;
+
+            // Counters for missing r attributes
+            Integer rowCounter = -1;
+            Integer columnCounter;
+
+            // Get the sheetData node
+            Dom.XmlNode sheetData = root.getChildElement('sheetData', Constant.NS_SPREADSHEET_ML);
+
+            // Process rows/cells
+            if(sheetData != null){
+
+                List<Dom.XmlNode> rowNodes = sheetData.getChildElements();
+
+                for(Integer ri = 0, riMax = rowNodes.size(); ri < riMax; ri++){
+
+                    Dom.XmlNode row = rowNodes[ri];
+
+                    // Increase the current row count (in case no r element exists)
+                    rowCounter++;
+
+                    // Reset the column counter for the current row (in case no r element exists)
+                    columnCounter = -1;
+
+                    // Start the current row token and the row number
+                    String rowNumber = row.getAttributeValue('r', null);
+                    currentRowParts = new String[]{
+                        'R' + (rowNumber != null ? rowNumber : String.valueOf(rowCounter))
+                    };
+
+                    // Get cells in this row
+                    List<Dom.XmlNode> cellNodes = row.getChildElements();
+
+                    for(Integer ci = 0, ciMax = cellNodes.size(); ci < ciMax; ci++){
+
+                        Dom.XmlNode cell = cellNodes[ci];
+
+                        // Increment the column counter for the current row
+                        columnCounter++;
+
+                        // Extract cell attributes
+                        String cellName = cell.getAttributeValue('r', null);
+                        String cellType = cell.getAttributeValue('t', null);
+
+                        // If there is a cell name extract all the details, else just take the increment
+                        if(cellName != null){
+                            String columnName = ParseUtil.columnNameFromCellName(cellName);
+                            currentColumnNumber = CommonUtil.columnNumberFromColumnName(columnName);
+                        }else{
+                            currentColumnNumber = columnCounter;
+                        }
+
+                        // Resolve the cell value
+                        String cellValue;
+
+                        if(cellType == 'inlineStr'){
+                            Dom.XmlNode isNode = cell.getChildElement('is', Constant.NS_SPREADSHEET_ML);
+                            if(isNode != null){
+                                Dom.XmlNode tNode = isNode.getChildElement('t', Constant.NS_SPREADSHEET_ML);
+                                if(tNode != null){
+                                    cellValue = tNode.getText();
+                                }
+                            }
+                        }else{
+                            Dom.XmlNode vNode = cell.getChildElement('v', Constant.NS_SPREADSHEET_ML);
+                            if(vNode != null){
+                                cellValue = vNode.getText();
+                            }
+                        }
+
+                        // Resolve shared string references
+                        if(cellValue != null && cellType == 's'){
+                            cellValue = sharedStrings[Integer.valueOf(cellValue)];
+                        }
+
+                        // Minimal normalization only, minimal performance impact
+                        if(!String.isBlank(cellValue)){
+                            if(
+                                cellValue.contains('\r') ||
+                                cellValue.contains('\n') ||
+                                cellValue.contains('^')
+                            ){
+                                cellValue = cellValue.replace('\r', ' ');
+                                cellValue = cellValue.replace('\n', ' ');
+                                cellValue = cellValue.replace('^', ' ');
+                            }
+
+                            // Add the cell value part
+                            currentRowParts.add('C' + currentColumnNumber + '=' + cellValue);
+                        }
+                    }
+
+                    // Only add rows that actually contain cell values
+                    if(currentRowParts.size() > 1){
+                        output.add(String.join(currentRowParts, '^'));
+                    }
+                }
+            }
+
+            // Process merge cells
+            Dom.XmlNode mergeCellsNode = root.getChildElement('mergeCells', Constant.NS_SPREADSHEET_ML);
+            if(mergeCellsNode != null){
+
+                List<Dom.XmlNode> mergeCellNodes = mergeCellsNode.getChildElements();
+
+                for(Integer mi = 0, miMax = mergeCellNodes.size(); mi < miMax; mi++){
+                    String ref = mergeCellNodes[mi].getAttributeValue('ref', null);
+                    if(ref != null){
+                        mergeCells.add(ref);
+                    }
+                }
+            }
+
+            // Add the worksheet merge cell info in the following format:
+            // MERGE=R2^R2:C3^C6
+            // MERGE=R19^R20:C2^C3
+            if(!mergeCells.isEmpty()){
+
+                String[] mergeCellLines = new String[]{};
+
+                for(Integer i = 0, max = mergeCells.size(); i < max; i++){
+
+                    if(String.isBlank(mergeCells[i])){
+                        continue;
+                    }
+
+                    Matcher m = Constant.CELL_RANGE_PATTERN.matcher(mergeCells[i]);
+
+                    if(m.matches()){
+                        mergeCellLines.add(
+                            String.format(
+                                'MERGE=R{0}^R{1}:C{2}^C{3}',
+                                new Object[]{
+                                    m.group(2), // Start row
+                                    m.group(4) != null ? m.group(4) : m.group(2), // End row
+                                    CommonUtil.columnNumberFromColumnName(m.group(1)), // Start column
+                                    m.group(3) != null
+                                        ? CommonUtil.columnNumberFromColumnName(m.group(3))
+                                        : CommonUtil.columnNumberFromColumnName(m.group(1)) // End column
+                                }
+                            )
+                        );
+                    }
+                }
+
+                // Add the merge cell lines after the sheet marker
+                output[mergeCellsIndex] = String.join(mergeCellLines, '\n');
+            }else{
+                // Remove the merge cells placeholder when there are no merge cells
+                output.remove(mergeCellsIndex);
             }
         }
 

@@ -2,10 +2,11 @@
  *          Example 15 - Parse XLSX to a custom output format that is optimised for LLMs
  ** **************************************************************************************************** **/
 try{
+
     // Parse to a string
-    String llmText = xlsx.Parse.toLlmText(
+    String llmText = xlsx.Parse.toLlmTextDomDoc(
         new Compression.ZipReader(
-            [SELECT VersionData FROM ContentVersion WHERE ContentDocumentId = '069Qz000006oKg2IAE' AND IsLatest = true LIMIT 1]?.VersionData
+            [SELECT VersionData FROM ContentVersion WHERE ContentDocumentId = '069Qz000006oXdFIAU' AND IsLatest = true LIMIT 1]?.VersionData
         ).getEntriesMap()
     );
 
