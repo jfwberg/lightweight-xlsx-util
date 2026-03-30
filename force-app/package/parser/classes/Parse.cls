@@ -1217,6 +1217,9 @@ global with sharing class Parse{
         // Output lines for the full workbook
         String[] output = new String[]{};
 
+        // Index for the sheet's merge cells in the output[] variable
+        Integer mergeCellsIndex;
+
         // Create a list of shared strings
         String[] sharedStrings = getSharedStrings(entries);
 
@@ -1228,6 +1231,10 @@ global with sharing class Parse{
 
         // Keep track of skipped worksheets
         Integer worksheetSkipCount = 0;
+
+        // Map that holds the caching between used column names i.e. A, AB, AAB etc. so its doesnt have to be calculated again
+        // This cache applies to all worksheets, so it's above the loop
+        Map<string,Integer> columnNameNumberMap = new Map<string,Integer>();
 
         // Parse each worksheet in its own loop
         for(Integer wi = 0, wiMax = worksheetPaths.size(); wi < wiMax; wi++){
@@ -1249,12 +1256,19 @@ global with sharing class Parse{
                 )
             );
 
+            // Create a placeholder for the merge values
+            Output.add('');
+            mergeCellsIndex = output.size()-1;
+
             // Create an XSR for the current worksheet XML file
             XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', ''));
 
             // Variables to hold the type and name of the current open cell element
             String cellName;
             String cellType;
+
+            // Keep a list of all merge cells in the sheets
+            String[] mergeCells = new String[]{};
 
             // Keep track of current row state
             String[] currentRowParts = new String[]{};
@@ -1265,8 +1279,7 @@ global with sharing class Parse{
             Integer rowCounter    = -1;
             Integer columnCounter = -1;
 
-            // Map that holds the caching between used column names i.e. A, AB, AAB etc. so its doesnt have to be calculated again
-            Map<string,Integer> columnNameNumberMap = new Map<string,Integer>();
+            
 
             // Traverse the XML elements in the worksheet
             while(true) {
@@ -1351,6 +1364,13 @@ global with sharing class Parse{
                                 }
                             }
                         }
+
+                        when 'mergeCell' {
+                            // Extract the REF value and add it to the list
+                            // Ref is mandatory according to the spec, so no null check here
+                            // Overlap makes the sheet invalid, so no overlap check either
+                            mergeCells.add(xsr.getAttributeValue(null, 'ref'));
+                        }
                     }
                 }
 
@@ -1362,9 +1382,38 @@ global with sharing class Parse{
                 }
             }
 
-            // Add the final row
+            // Add the final row to the output data
             if(currentRowParts.size() > 1){
                 output.add(String.join(currentRowParts, '^'));
+            }
+
+            // Add the worksheet merge cell info in the following format:
+            // MERGE^R2^C3:C6 MERGE^R19:R20^C2:C3
+            if(!mergeCells.isEmpty()){
+                String[] mergeCellLines = new String[]{};
+                for (Integer i = 0,max=mergeCells.size(); i < max; i++) {
+                    
+                    // Skip empty strings
+                    if(String.isBlank(mergeCells[i])){continue;}
+                        
+                    // Execute regex
+                    Matcher m = Constant.CELL_RANGE_PATTERN.matcher(mergeCells[i]);
+
+                    // Handle matches and add ranges to the output
+                    if (m.matches()) {
+                        mergeCellLines.add(String.format(
+                            'MERGE=R{0}^R{1}:C{2}^C{3}',
+                            new Object[]{
+                                m.group(2),                                     // Start row
+                                m.group(4) != null ? m.group(4) : m.group(2),   // end row
+                                CommonUtil.columnNumberFromColumnName(m.group(1)),                                     // Start column
+                                m.group(3) != null ? CommonUtil.columnNumberFromColumnName(m.group(3)) : CommonUtil.columnNumberFromColumnName(m.group(1))    // End Column
+                            }
+                        ));
+                    }
+                }
+                // Add the merge cell lines after the sheet data
+                output[mergeCellsIndex]=String.join(mergeCellLines,'\n');
             }
         }
 

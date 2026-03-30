@@ -74,6 +74,12 @@ public with sharing class Constant {
 
     // Patern generated from the cell name so the pattern compilation only has to be executed once
     public static final Pattern  CELL_NAME_PATTERN  = Pattern.compile(CELL_NAME_REGEX);
+    
+    // Regex to get a cell range
+    public static final String   CELL_RANGE_REGEX    = '^([A-Za-z]+)(\\d+)(?::([A-Za-z]+)(\\d+))?$';
+
+    // Patern generated from the cell range so the pattern compilation only has to be executed once
+    public static final Pattern  CELL_RANGE_PATTERN  = Pattern.compile(CELL_RANGE_REGEX);
 
     // Character Array to calculate column names
     public static final String[] CHARS              = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');

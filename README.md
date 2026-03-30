@@ -21,7 +21,7 @@ The library comes with the most common functionalities like freezing rows, mergi
 |**Managed** | `sf package install --wait 30 --security-type AllUsers --package 04tP3000001EprhIAC` | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001EprhIAC) | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001EprhIAC)|
 |**Unlocked**| `sf package install --wait 30 --security-type AllUsers --package 04tP3000001EptJIAS` | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP3000001EptJIAS)          | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP3000001EptJIAS)|
 
-## Package Info
+## Optional LLM Util Package Info
 | Info | Value | ||
 |---|---|---|---|
 |Name|Lightweight - XLSX to LLM Util||
@@ -74,6 +74,20 @@ List<Map<String,Object>> xlsxDataMap = xlsx.Parse.toMap(
     ).getEntriesMap()
 );
 ```
+
+## Parsing for LLMs / Salesforce Agentforce
+
+LLMs are notoriously bad at reading the complex structure of XLSX files. To get around this I created a custom output format that is easy to interpret by LLMs, small on tokens and it keeps the context
+
+```java
+// As multi dimensional array
+Object[][][] xlsxDataArray = xlsx.Parse.toArray(
+    new Compression.ZipReader(
+        [SELECT body FROM Document WHERE Id = '015Qz000004jf7yIAA' LIMIT 1]?.Body
+    ).getEntriesMap()
+);
+```
+
 
 ## Parse Methods
 For different use cases you can use different parse methods each with advantages. Using the `Dom.Document` class for reading XML is a lot faster than the `XmlStreamWriter` but also limited due to the large heap size it uses.

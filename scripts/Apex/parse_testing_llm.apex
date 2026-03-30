@@ -3,21 +3,16 @@
  ** **************************************************************************************************** **/
 try{
 
-    // 015Ae00000A5mEMIAZ 12 days of christmas 
-    // 015Ae00000A6ZmyIAF 50 k
-    // 015Ae00000A6g5LIAR 100 k
-    // 015Ae00000A6g6sIAB 150 k
-    // 015Ae00000A6e9tIAB 200 k
-    // 015Pt000009754DIAQ
+   
 
     // As data map list
-    Object llmText = xlsx.Parse.toMap(
+    String llmText = xlsx.Parse.toLlmText(
         new Compression.ZipReader(
-            //[SELECT VersionData FROM ContentVersion WHERE ContentDocumentId = '069Pt000008RSzjIAG' AND IsLatest = true LIMIT 1]?.VersionData
-            [SELECT body FROM Document WHERE Id = '015Pt000009754DIAQ' LIMIT 1]?.Body
+            [SELECT VersionData FROM ContentVersion WHERE ContentDocumentId = '069J900000DedA9IAJ' AND IsLatest = true LIMIT 1]?.VersionData
         ).getEntriesMap()
     );
 
+    System.debug(llmText);
     
     
 }catch(Exception e){

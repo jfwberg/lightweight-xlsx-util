@@ -5,7 +5,7 @@
       "versionNumber": "0.7.0.NEXT",
       "ancestorVersion": "0.6.0",
       "path": "force-app/package",
-      "default": false,
+      "default": true,
       "package": "Lightweight - XLSX Util",
       "versionDescription": "A lightweight library to build and parse Excel(XLSX) files"
     },
@@ -21,7 +21,7 @@
       "versionName": "v66.0 - 0.7",
       "versionNumber": "0.1.0.NEXT",
       "path": "force-app/xlsx_to_llm",
-      "default": true,
+      "default": false,
       "package": "Lightweight - XLSX to LLM Util",
       "versionDescription": "A set of XLSX to LLM (flow) Utilities to compliment the Lightweight - XLSX Util",
       "dependencies": [
