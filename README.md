@@ -78,11 +78,11 @@ List<Map<String,Object>> xlsxDataMap = xlsx.Parse.toMap(
 
 ## Parsing for LLMs / Salesforce Agentforce
 
-LLMs are notoriously bad at reading the complex structure of XLSX files. To get around this I created a custom output format that is easy to interpret by LLMs, small on tokens and it keeps the context
+LLMs are notoriously bad at reading the complex structure of XLSX files. To get around this I created a custom output format that is easy to interpret by LLMs, small on tokens and it keeps the cposition rather than context. The LLM can infer the context based on the flat locations.
 
 ```java
 // As multi dimensional array
-Object[][][] xlsxDataArray = xlsx.Parse.toArray(
+String llmCompatibleText = xlsx.Parse.toLlmText(
     new Compression.ZipReader(
         [SELECT body FROM Document WHERE Id = '015Qz000004jf7yIAA' LIMIT 1]?.Body
     ).getEntriesMap()
