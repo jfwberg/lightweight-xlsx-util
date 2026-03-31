@@ -1,7 +1,7 @@
 /**
  * @author      Justus van den Berg (jfwberg@gmail.com)
  * @date        January 2025
- * @copyright   (c) 2025 Justus van den Berg
+ * @copyright   (c) 2026 Justus van den Berg
  * @license     MIT (See LICENSE file in the project root)
  * @description Basic performance test to read an XLXS file using the XLSXParser class.
  *              iterate all results and execute a sample action on each cell to have some
@@ -47,7 +47,7 @@ public with sharing class ParserPerformanceTest {
             ).getEntriesMap()
         );
 
-        System.debug(JSON.serializePretty(xlsxDataArray));
+        
 
         // Register end time
         Decimal pt = Limits.getCpuTime();
@@ -154,6 +154,51 @@ public with sharing class ParserPerformanceTest {
         lwt.Dbg.al('documentId'         + ': ' + documentId         );
         lwt.Dbg.al('PARSE Time'         + ': ' + (pt-st)            );
         lwt.Dbg.al('HANDLING Time'      + ': ' + (et-pt)            );
+        lwt.Dbg.pub();
+    }
+
+
+    /**
+     * @description Method to test the performance of the XLSX parser to Map Asynchronously
+     * @param numberOfWorksheets The number of worksheets to create
+     * @param numberOfColumns    The number of columns to create
+     * @param numberOfRows       The number of rows to create
+     * @param documentId         The Id of the file to read
+     */
+    @future
+    public static void parseToLlmTextAsync(Integer numberOfWorksheets, Integer numberOfColumns, Integer numberOfRows, String documentId){
+        parseToLlmText(numberOfWorksheets, numberOfColumns, numberOfRows, documentId);
+    }
+
+
+    /**
+     * @description Method to test the performance of the XLSX parser to Map Synchronously
+     * @param numberOfWorksheets The number of worksheets to create
+     * @param numberOfColumns    The number of columns to create
+     * @param numberOfRows       The number of rows to create
+     * @param documentId         The Id of the file to read
+     */    
+    public static void parseToLlmText(Integer numberOfWorksheets, Integer numberOfColumns, Integer numberOfRows, String documentId){
+
+        // Register start time
+        Decimal st = Limits.getCpuTime();
+
+        // Parse the file
+        String output = xlsx.Parse.toLlmText(
+            new Compression.ZipReader(
+                [SELECT body FROM Document WHERE Id = :documentId LIMIT 1].Body
+            ).getEntriesMap()
+        );
+
+        // Register end time
+        Decimal pt = Limits.getCpuTime();
+
+        // Create a debug log
+        lwt.Dbg.al('numberOfWorksheets' + ': ' + numberOfWorksheets );
+        lwt.Dbg.al('numberOfColumns'    + ': ' + numberOfColumns    );
+        lwt.Dbg.al('numberOfRows'       + ': ' + numberOfRows       );
+        lwt.Dbg.al('documentId'         + ': ' + documentId         );
+        lwt.Dbg.al('PARSE Time'         + ': ' + (pt-st)            );
         lwt.Dbg.pub();
     }
 }

@@ -1,7 +1,7 @@
 /**
  * @author         Justus van den Berg (jfwberg@gmail.com)
  * @date           January 2025
- * @copyright      (c) 2025 Justus van den Berg
+ * @copyright      (c) 2026 Justus van den Berg
  * @license        MIT (See LICENSE file in the project root)
  * @description    Class that holds a set of common utilities that a developer can use
  *                 when creating XLSX files that are slightly more complex
@@ -14,6 +14,8 @@
 @SuppressWarnings('PMD.AvoidGlobalModifier, PMD.OneDeclarationPerLine')
 global with sharing class CommonUtil {
 
+    // Map holding the cache between the column name and the corresponding integer
+    private static Map<String,Integer> columnNameIntegerMap = new Map<String,Integer>();
 
     /**
      * @description Method to convert column index to column name
@@ -33,7 +35,7 @@ global with sharing class CommonUtil {
 
         // When less than 26 just return the letter
         if(columnNumber < 26 ){
-            return columnName = Constant.CHARS[columnNumber - 1];
+            return columnName = Constant.CHARS[columnNumber];
         }
 
         // As long as we have a remainder continue
@@ -47,7 +49,7 @@ global with sharing class CommonUtil {
                 columnName  +=('Z');
                 columnNumber = (columnNumber / 26) - 1;
             }else{
-                columnName  += Constant.CHARS[rem - 1] ;
+                columnName  += Constant.CHARS[rem] ;
                 columnNumber = columnNumber / 26;
             }
         }
@@ -65,6 +67,11 @@ global with sharing class CommonUtil {
      */
     global static Integer columnNumberFromColumnName(String columnName){
 
+        // Check the cache
+        if(columnNameIntegerMap.containsKey(columnName)){
+            return columnNameIntegerMap.get(columnName);
+        }
+
         // Split the column name so we can iterate each character
         String[] columnNameIndex = columnName.split('');
 
@@ -76,6 +83,11 @@ global with sharing class CommonUtil {
             result *= 26;
             result += Constant.NUMS.get(columnNameIndex[i]);
         }
+        
+        // Populate the map for reuse
+        columnNameIntegerMap.put(columnName,result);
+        
+        // Return the result
         return result;
     }
 
@@ -119,5 +131,38 @@ global with sharing class CommonUtil {
     global static String getTimestampString(){
         return Constant.NOW.format(Constant.TIMESTAMP_FORMAT);
     }
+
+
+    /** **************************************************************************************************** **
+     **                                     GLOBAL TEST UTILITY METHODS                                     **
+     ** **************************************************************************************************** **/
+    /**
+     * @description Method to get a text body from a static resource
+     *              Ideal if you have stored cert data (temporarily) in a static resource or during
+     *              apex tests
+     * @param       staticResourceName   The developer name of the static resource you want the body
+     *                                   value from
+     * @return      Static resource body
+     * @throws      InvalidDataException There is an issue with the static resource
+     */
+    global static String getStaticResourceBody(String staticResourceName){
+        try{
+            return ([SELECT Body FROM StaticResource WHERE Name = :staticResourceName WITH USER_MODE LIMIT 1].Body)?.toString();
+        }catch(System.QueryException e){
+            throw new InvalidDataException(String.format(Constant.MSG_STATIC_RESOURCE_ERROR, new String[]{staticResourceName}));
+        }
+    }
+
+
+    /** **************************************************************************************************** **
+     **                                      GLOBAL EXCEPTION CLASSES                                        **
+     ** **************************************************************************************************** **/
+    /**
+     * @description An exception that is thrown when something goes wrong retrieving
+     *              any (meta) data
+     * @note        This class is private and test visible as it should only be ever caught
+     *              when an Apex Unit Test is running and never from normal code
+     */
+    global with sharing class InvalidDataException extends Exception{}
 
 }

@@ -1,7 +1,7 @@
 /**
  * @author         Justus van den Berg (jfwberg@gmail.com)
  * @date           January 2025
- * @copyright      (c) 2025 Justus van den Berg
+ * @copyright      (c) 2026 Justus van den Berg
  * @license        MIT (See LICENSE file in the project root)
  * @description    Example to answer the age old questions... How many gifts did my true love gave to me
  *                 after twelve days of Christmas... or 30 or 60 or N days of Christmas...

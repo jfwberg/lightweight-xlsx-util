@@ -1,7 +1,7 @@
 /**
  * @author      Justus van den Berg (jfwberg@gmail.com)
  * @date        January 2025
- * @copyright   (c) 2025 Justus van den Berg
+ * @copyright   (c) 2026 Justus van den Berg
  * @license     MIT (See LICENSE file in the project root)
  * @description Execution of a performance test
  */
@@ -14,7 +14,7 @@
 //      3       25     2625    196,875      5690ms  3608ms --> 243k (3*25*3250)
 //      4       25     2000    200,000      5463ms  3830ms --> 250k (4*25*2500)
 //      5       25     1650    206,250      5706ms  3835ms --> 250k (5*25*2000)
-xlsx.BuilderPerformanceTest.run(2,25,3000);
+xlsx.BuilderPerformanceTest.run(2,25,2500);
 
 
 // -------------------------------------------------------

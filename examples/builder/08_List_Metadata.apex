@@ -1,7 +1,7 @@
 /**
  * @author         Justus van den Berg (jfwberg@gmail.com)
  * @date           January 2025
- * @copyright      (c) 2025 Justus van den Berg
+ * @copyright      (c) 2026 Justus van den Berg
  * @license        MIT (See LICENSE file in the project root)
  * @description    Example of you can export your org's metadata details to an Excel sheet
  * @requires       Lightweight - SOAP Util v0.2 (/packaging/installPackage.apexp?p0=04tP3000000uNzdIAE)

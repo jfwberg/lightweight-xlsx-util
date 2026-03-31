@@ -1,7 +1,7 @@
 /**
  * @author         Justus van den Berg (jfwberg@gmail.com)
  * @date           January 2025
- * @copyright      (c) 2025 Justus van den Berg
+ * @copyright      (c) 2026 Justus van den Berg
  * @license        MIT (See LICENSE file in the project root)
  * @description    Class containing all the static values that are used
  *                 to generate the various XML Files in the package
@@ -13,30 +13,37 @@ public with sharing class Constant {
      **                                            SAFE TO UPDATE                                            **
      ** **************************************************************************************************** **/
     // Static application info (Safe to update)
-    public static final String  APP_NAME     = 'Lightweight - XLSX Builder';
-    public static final Integer REVISION     = 0;
-    public static final String  CREATOR      = UserInfo.getFirstName() + ' ' + UserInfo.getLastName();
-    public static final String  COMPANY_NAME = UserInfo.getOrganizationName();
+    public static final String  APP_NAME                    = 'Lightweight - XLSX Builder';
+    public static final Integer REVISION                    = 0;
+    public static final String  CREATOR                     = UserInfo.getFirstName() + ' ' + UserInfo.getLastName();
+    public static final String  COMPANY_NAME                = UserInfo.getOrganizationName();
 
     // Switch between inline strings in cells and the shared strings
     // Setting this to true can be beneficial for sheets that have lots of shared values
-    public static final Boolean DEF_SHARED_STRINGS      = true;
+    public static final Boolean DEF_SHARED_STRINGS          = true;
 
     // Include the default styles, handy for testing or company default
-    public static final Boolean DEF_INCLUDE_STYLES      = false;
+    public static final Boolean DEF_INCLUDE_STYLES          = false;
+    
+    // Static resource file name for the default instructions
+    public static final String  LLM_DEF_INSTRUCTION_SR      = 'llm_default_instructions';
 
     // (Error) Messages
-    public static final String  MSG_INVALID_WS_NAME     = 'Worksheet name cannot be blank or exceed 31 characters in length';
-    public static final String  MSG_DUPLICATE_WORKSHEET = 'A worksheet with the name "{0}" already exists in the builder.';
-    public static final String  MSG_INVALID_CELL_NAME   = 'Invalid cell name: "{0}"';
-    public static final String  MSG_INVALID_ZIP_ENTRY   = 'The file name "{0}" does not exist in the zip entries map.';
-    public static final String  MSG_NO_DIMENSION_ATTR   = 'The worksheet does not contain the "dimension" attribute. To use the "toArray()" methods, this attribute is required. Please use the "toMap()" methods. This often happens with sheets created in Google Sheets. A solution is on the roadmap.';
+    public static final String  MSG_INVALID_WS_NAME         = 'Worksheet name cannot be blank or exceed 31 characters in length';
+    public static final String  MSG_DUPLICATE_WORKSHEET     = 'A worksheet with the name "{0}" already exists in the builder.';
+    public static final String  MSG_INVALID_CELL_NAME       = 'Invalid cell name: "{0}"';
+    public static final String  MSG_INVALID_ZIP_ENTRY       = 'The file name "{0}" does not exist in the zip entries map.';
+    public static final String  MSG_NO_DIMENSION_ATTR       = 'The worksheet does not contain the "dimension" attribute. To use the "toArray()" methods, this attribute is required. Please use the "toMap()" methods. This often happens with sheets created in Google Sheets. A solution is on the roadmap.';
+    public static final String  MSG_STATIC_RESOURCE_ERROR   = 'No static resource with the name "{0}" found in the metadata';
+    public static final String  MSG_LLM_TEXT_UNKNOWN_ERROR  = 'An unexpected error occurred whilst processing the ContentDocument. Exception Message: "{0}"';
+    public static final String  MSG_FORCED_EXCEPTION        = 'This is a forced exception error message used for code coverage';
+    public static final String  MSG_XLSX_EXTENSION_EXCEPTION= 'The content document extension is invalid. Only the "xlsx" extension is supported';
 
 
     /** **************************************************************************************************** **
      **                                          !! DO NOT TOUCH !!                                          **
      ** **************************************************************************************************** **/
-    // Current timestamp that is used throughout the sheet
+    // Current timestamp that is used throughout the sheet for consistency
     public static final DateTime NOW                = Datetime.now();
 
     // Formatted output of the timestamp
@@ -67,9 +74,16 @@ public with sharing class Constant {
 
     // Patern generated from the cell name so the pattern compilation only has to be executed once
     public static final Pattern  CELL_NAME_PATTERN  = Pattern.compile(CELL_NAME_REGEX);
+    
+    // Regex to get a cell range
+    public static final String   CELL_RANGE_REGEX    = '^([A-Za-z]+)(\\d+)(?::([A-Za-z]+)(\\d+))?$';
+
+    // Patern generated from the cell range so the pattern compilation only has to be executed once
+    public static final Pattern  CELL_RANGE_PATTERN  = Pattern.compile(CELL_RANGE_REGEX);
 
     // Character Array to calculate column names
-    public static final String[] CHARS              = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    // Added a spacer ^ to prevent a calculation 
+    public static final String[] CHARS              = '^ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
     // Number array to reverse calculate the numbers column names
     public static final Map<String,Integer> NUMS    = new Map<String,Integer>{

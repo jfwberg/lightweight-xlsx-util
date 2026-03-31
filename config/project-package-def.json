@@ -1,8 +1,9 @@
 {
-    "orgName": "Lightweight - XLSX - Util - Scratch Org (v63.0)",
+    "orgName": "Lightweight - XLSX - Util - Scratch Org (v66.0)",
     "edition" : "Developer",
     "features": [
-        "EnableSetPasswordInApi"
+        "EnableSetPasswordInApi",
+        "Einstein1AIPlatform"
     ],
     "language": "en_US",
     "country": "GB",
@@ -12,6 +13,9 @@
         },
         "mobileSettings": {
             "enableS1EncryptedStoragePref2": false
+        },
+        "einsteinGptSettings" : {
+            "enableEinsteinGptPlatform" : true
         }
     }   
 }

@@ -1,7 +1,7 @@
 /**
  * @author         Justus van den Berg (jfwberg@gmail.com)
  * @date           January 2025
- * @copyright      (c) 2025 Justus van den Berg
+ * @copyright      (c) 2026 Justus van den Berg
  * @license        MIT (See LICENSE file in the project root)
  * @description    A class to holds an example of how you can parse an XLSX
  *                 worksheet data into a multi-dimensional array or into a list of maps
@@ -33,6 +33,19 @@ global with sharing class Parse{
      * @return         A map with the sheet name as key and the index as value
      */
     global static Map<String,Integer> toWorksheetNameIndexMap(Map<String,Compression.ZipEntry> entries){
+        return toWorksheetNameIndexMap(entries,null);
+    }
+
+
+    /**
+     * @description Method that creates a map with the sheet name as key and the
+     *              sheet index as the value
+     *              This is to be used if you don't know the sheet order but do know the name
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @param  selectedSheets A set of integers representing the sheet indexes
+     * @return      A map with the sheet name as key and the index as value
+     */
+    global static Map<String,Integer> toWorksheetNameIndexMap(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets){
 
         // Validate the workbook file exists
         if(!entries.containsKey(Constant.ZP_PATH_WORKBOOK)){
@@ -43,7 +56,7 @@ global with sharing class Parse{
         SheetIndex[] sheetIndexes = new SheetIndex[]{};
 
         // Create an XSR for the current worksheet XML file
-        XmlStreamReader xsr = new XmlStreamReader(entries.get(Constant.ZP_PATH_WORKBOOK).getContent().toString());
+        XmlStreamReader xsr = new XmlStreamReader(entries.get(Constant.ZP_PATH_WORKBOOK).getContent().toString().replace('\uFEFF', ''));
 
         // Traverse the XML elements in the worksheet
         // I am not using while(xsr.hasNext()) to save a method call at the end of each item
@@ -76,13 +89,65 @@ global with sharing class Parse{
         // Create a map for the output
         Map<String,Integer> worksheetNameIndexMap = new Map<String,Integer>();
 
+        // Keep track of skipped worksheets
+        Integer worksheetSkipCount = 0;
+
         // populate the output map
-        for(Integer i =0,max=sheetIndexes.size();i<max;i++){
-            worksheetNameIndexMap.put(sheetIndexes[i].name,i);
+        for(Integer wi=0,wiMax=sheetIndexes.size();wi<wiMax;wi++){
+
+            // Skip sheets that are not included in the selectedSheets
+            if(selectedSheets != null && !selectedSheets.contains(wi)){
+                worksheetSkipCount++;
+                continue;
+            }
+
+            // Calculate the current worksheet index in case we select specific worksheets only
+            Integer currentWi = wi-worksheetSkipCount;
+
+            // Add the name at the new worksheet index because some have been deleted
+            worksheetNameIndexMap.put(sheetIndexes[wi].name, currentWi);
         }
 
         // Return the output map
         return worksheetNameIndexMap;
+    }
+
+
+    /**
+     * @description Method that creates a map with the sheet Index as key and the
+     *              sheet name as the value
+     *              This is to be used if you don't know the sheet order but do know the name
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @return      A map with the sheet name as key and the index as value
+     */
+    global static Map<Integer,String> toWorksheetIndexNameMap(Map<String,Compression.ZipEntry> entries){
+        return toWorksheetIndexNameMap(entries,null);
+    }
+
+
+    /**
+     * @description Method that creates a map with the sheet Index as key and the
+     *              sheet name as the value
+     *              This is to be used if you don't know the sheet order but do know the name
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @param  selectedSheets A set of integers representing the sheet indexes
+     * @return      A map with the sheet name as key and the index as value
+     */
+    global static Map<Integer,String> toWorksheetIndexNameMap(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets){
+        
+        // Create a map for the output
+        Map<Integer,String> worksheetIndexNameMap = new Map<Integer,String>();
+
+        // Create the worksheet index map using the main logic
+        Map<String,Integer> worksheetNameIndexMap = toWorksheetNameIndexMap(entries,selectedSheets);
+
+        // Invert the map
+        for(String worksheetName : worksheetNameIndexMap.keySet()){
+            worksheetIndexNameMap.put(worksheetNameIndexMap.get(worksheetName), worksheetName);
+        }
+
+        // Return the inverted map
+        return worksheetIndexNameMap;
     }
 
 
@@ -148,7 +213,7 @@ global with sharing class Parse{
             output.add(new Object[][]{});
 
             // Create an XSR for the current worksheet XML file
-            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString());
+            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', ''));
 
             // Set the current row to -1 so the indexes match
             Integer currentRi = -1;
@@ -230,7 +295,7 @@ global with sharing class Parse{
                             // the last column and rows based on iterating the entire sheet
                             if(!hasDimensionAttribute){
                                 ParseUtil.populateColumnIndexMapWithoutDimensionAttribute(
-                                    new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString()),
+                                    new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', '')),
                                     currentWi,
                                     output,
                                     false // Inverted
@@ -514,7 +579,7 @@ global with sharing class Parse{
             output.add(new Object[][]{});
 
             // Create an XSR for the current worksheet XML file
-            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString());
+            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', ''));
 
             // Set the current row to -1 so the indexes match
             Integer currentRi = -1;
@@ -596,7 +661,7 @@ global with sharing class Parse{
                             // the last column. Until that fix just throw an exception
                             if(!hasDimensionAttribute){
                                 ParseUtil.populateColumnIndexMapWithoutDimensionAttribute(
-                                    new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString()),
+                                    new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', '')),
                                     currentWi,
                                     output,
                                     true // Inverted
@@ -877,7 +942,7 @@ global with sharing class Parse{
             output.add(new Map<String,Object>());
 
             // Create an XSR for the current worksheet XML file
-            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString());
+            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', ''));
 
             // Variables to hold the type and name of the current open cell element
             String cellName;
@@ -1032,6 +1097,568 @@ global with sharing class Parse{
         return output;
     }
 
+    /** **************************************************************************************************** **
+     **                                          GLOBAL SHEET MAP METHODS                                    **
+     ** **************************************************************************************************** **/
+    /**
+     * @description Method that takes an unzipped xlsx archive as parameter and
+     *              returns the sheet data as a map of sheet name to 2D Object[][]
+     *              (row-major order)
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @return                A map with the sheet name as key and the 2D Object[][] as value
+     */
+    global static Map<String, Object[][]> toSheetNameArrayMap(Map<String, Compression.ZipEntry> entries){
+        return toSheetNameArrayMap(entries, null);
+    }
+    
+
+    /**
+     * @description Method that takes an unzipped xlsx archive as parameter and
+     *              returns the sheet data as a map of sheet name to 2D Object[][]
+     *              (row-major order)
+     * @author 
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @param  selectedSheets A set of integers representing the sheet indexes to parse
+     * @return                A map with the sheet name as key and the 2D Object[][] as value
+     */
+    global static Map<String, Object[][]> toSheetNameArrayMap(Map<String, Compression.ZipEntry> entries, Set<Integer> selectedSheets){
+
+        // Create the map for the output
+        Map<String, Object[][]> sheetNameArrayMap = new Map<String, Object[][]>();
+
+        // Get the sheet names related to the index
+        Map<Integer,String> worksheetIndexNameMap = toWorksheetIndexNameMap(entries,selectedSheets);
+
+        // Counter for the sheet index
+        Integer wi = 0;
+        
+        // Populate the worksheets array
+        for(Object[][] sheetData : toArray(entries,selectedSheets)){
+            sheetNameArrayMap.put(worksheetIndexNameMap.get(wi),sheetData);
+            wi++;
+        }
+
+        // Return the formatted data
+        return sheetNameArrayMap;
+    }
+
+
+    /**
+     * @description Method that takes an unzipped xlsx archive as parameter and
+     *              returns the sheet data as a map of sheet name to 2D Object[][]
+     *              (column-major order) but putting it in a map using the sheet names
+     * @author 
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @return                A map with the sheet name as key and the 2D Object[][] as value
+     */
+    global static Map<String, Object[][]> toSheetNameArrayInvertedMap(Map<String, Compression.ZipEntry> entries){
+        return toSheetNameArrayInvertedMap(entries,null);
+    }
+
+
+    /**
+     * @description Method that takes an unzipped xlsx archive as parameter and
+     *              returns the sheet data as a map of sheet name to 2D Object[][]
+     *              (column-major order) but putting it in a map using the sheet names
+     * @author 
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @param  selectedSheets A set of integers representing the sheet indexes to parse
+     * @return                A map with the sheet name as key and the 2D Object[][] as value
+     */
+    global static Map<String, Object[][]> toSheetNameArrayInvertedMap(Map<String, Compression.ZipEntry> entries, Set<Integer> selectedSheets){
+
+        // Create the map for the output
+        Map<String, Object[][]> sheetNameArrayMap = new Map<String, Object[][]>();
+
+        // Get the sheet names related to the index
+        Map<Integer,String> worksheetIndexNameMap = toWorksheetIndexNameMap(entries,selectedSheets);
+
+        // Counter for the sheet index
+        Integer wi = 0;
+        
+        // Populate the worksheets array
+        for(Object[][] sheetData : toArrayInverted(entries,selectedSheets)){
+            sheetNameArrayMap.put(worksheetIndexNameMap.get(wi),sheetData);
+            wi++;
+        }
+
+        // Return the formatted data
+        return sheetNameArrayMap;
+    }
+
+  
+    /** **************************************************************************************************** **
+     **                                        GLOBAL LLM TEXT METHODS                                       **
+     ** **************************************************************************************************** **/
+    /**
+     * @description Method that takes an unzipped xlsx archive as parameter and
+     *              returns the sheet data in a custom LLM optimised format that converts
+     *              the sheets in column major order (i.e. as the sheet table)
+     * @author 
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @return                An Custom LLM Text formatted representation of the data
+     */
+    global static String toLlmText(Map<String,Compression.ZipEntry> entries){
+        return toLlmText(entries,null);
+    }
+
+
+    /**
+     * @description Method that takes an unzipped xlsx archive as parameter and
+     *              returns the sheet data in a custom LLM optimised format that converts
+     *              the sheets in column major order (i.e. as the sheet table)
+     * @author 
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @param  selectedSheets A set of integers representing the sheet indexes to parse
+     * @return                An Custom LLM Text formatted representation of the data
+     */
+    global static String toLlmText(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets){
+
+        // Output lines for the full workbook
+        String[] output = new String[]{};
+
+        // Index for the sheet's merge cells in the output[] variable
+        Integer mergeCellsIndex;
+
+        // Create a list of shared strings
+        String[] sharedStrings = getSharedStrings(entries);
+
+        // In order to sort the worksheets, we need to put them in a list to sort
+        String[] worksheetPaths = getWorksheetPaths(entries);
+
+        // Get the names
+        Map<Integer,String> worksheetIndexNameMap = toWorksheetIndexNameMap(entries, selectedSheets);
+
+        // Keep track of skipped worksheets
+        Integer worksheetSkipCount = 0;
+
+        // Parse each worksheet in its own loop
+        for(Integer wi = 0, wiMax = worksheetPaths.size(); wi < wiMax; wi++){
+
+            // Skip sheets that are not included in the selectedSheets
+            if(selectedSheets != null && !selectedSheets.contains(wi)){
+                worksheetSkipCount++;
+                continue;
+            }
+
+            // Add the sheet marker
+            output.add(
+                String.join(
+                    new String[]{
+                        'SHEET=',
+                        worksheetIndexNameMap.get(wi-worksheetSkipCount)
+                    },
+                    ''
+                )
+            );
+
+            // Create a placeholder for the merge values
+            Output.add('');
+            mergeCellsIndex = output.size()-1;
+
+            // Create an XSR for the current worksheet XML file
+            XmlStreamReader xsr = new XmlStreamReader(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', ''));
+
+            // Variables to hold the type and name of the current open cell element
+            String cellName;
+            String cellType;
+
+            // Keep a list of all merge cells in the sheets
+            String[] mergeCells = new String[]{};
+
+            // Keep track of current row state
+            String[] currentRowParts = new String[]{};
+
+            // Keep track of current column number
+            Integer currentColumnNumber = null;
+            
+            // Counters for missing r attributes
+            Integer rowCounter    = -1;
+            Integer columnCounter = -1;
+
+            // Traverse the XML elements in the worksheet
+            while(true) {
+                if (xsr.getEventType() == XmlTag.START_ELEMENT) {
+                    switch on xsr.getLocalName() {
+
+                        // The row element
+                        when 'row' {
+                            
+                            // Increase the current row count (in case no r element exists)
+                            rowCounter++;
+
+                            // Reset the column counter for the current row (in case no r element exists)
+                            columnCounter = -1;
+                            
+                            // Ignore when there is no row yet or the row has no cells in it
+                            if(currentRowParts.size() > 1){
+                                output.add(String.join(currentRowParts,'^'));
+                            }
+                            
+                            // Add the current row token and the row number
+                            currentRowParts = new String[]{ 'R' + (xsr.getAttributeValue(null, 'r') ?? rowCounter.toString()) };
+                        }
+
+                        // The cell element
+                        when 'c' {
+                            // Increment the column counter for the current row
+                            columnCounter++;
+
+                            // Extract cell attributes
+                            cellName = xsr.getAttributeValue(null, 'r');
+                            cellType = xsr.getAttributeValue(null, 't');
+
+                            // If there is a cellname extract all the details, else just take the increment
+                            if(cellName != null){
+                                // Get the column name from the cell
+                                String columnName = ParseUtil.columnNameFromCellName(cellName);
+
+                                // Set the current column number
+                                currentColumnNumber = CommonUtil.columnNumberFromColumnName(columnName);
+                            }else{
+                                currentColumnNumber = columnCounter;
+                            }
+                        }
+
+                        // Value tags inside the cell element
+                        when 'v','t' {
+
+                            // Skip to the text element
+                            xsr.next();
+
+                            // Validate we're in a text element
+                            if(xsr.getEventType() == XmlTag.CHARACTERS){
+
+                                // Resolve the cell value
+                                String cellValue = (cellType == 's')
+                                    ? sharedStrings[Integer.valueOf(xsr.getText())]
+                                    : xsr.getText()
+                                ;
+
+                                // Minimal normalization only, minimal performance impact
+                                // Note this is not in a method because that slows things down again
+                                // as its an addition function call for each cell
+                                if(!String.isBlank(cellValue)){
+                                    if(
+                                        cellValue.contains('\r') ||
+                                        cellValue.contains('\n') ||
+                                        cellValue.contains('^')
+                                    ){
+                                        cellValue = cellValue.replace('\r', ' ');
+                                        cellValue = cellValue.replace('\n', ' ');
+                                        cellValue = cellValue.replace('^', ' ');
+                                    }
+
+                                    // Add the cell value part (works faster than string.join)
+                                    currentRowParts.add('C' + currentColumnNumber + '=' + cellValue);
+                                }
+                            }
+                        }
+
+                        when 'mergeCell' {
+                            // Extract the REF value and add it to the list
+                            // Ref is mandatory according to the spec, so no null check here
+                            // Overlap makes the sheet invalid, so no overlap check either
+                            mergeCells.add(xsr.getAttributeValue(null, 'ref'));
+                        }
+                    }
+                }
+
+                // If there is a next element go to the next element, else we're done
+                if(xsr.hasNext()){
+                    xsr.next();
+                }else{
+                    break;
+                }
+            }
+
+            // Add the final row to the output data
+            if(currentRowParts.size() > 1){
+                output.add(String.join(currentRowParts, '^'));
+            }
+
+            // Add the worksheet merge cell info in the following format:
+            // MERGE^R2^C3:C6 MERGE^R19:R20^C2:C3
+            if(!mergeCells.isEmpty()){
+                
+                String[] mergeCellLines = new String[]{};
+                
+                for (Integer i = 0,max=mergeCells.size(); i < max; i++) {
+                    
+                    // Skip empty strings
+                    if(String.isBlank(mergeCells[i])){continue;}
+                        
+                    // Execute regex
+                    Matcher m = Constant.CELL_RANGE_PATTERN.matcher(mergeCells[i]);
+
+                    // Handle matches and add ranges to the output
+                    if (m.matches()) {
+                        mergeCellLines.add(String.format(
+                            'MERGE=R{0}^R{1}:C{2}^C{3}',
+                            new Object[]{
+                                m.group(2),                                         // Start row
+                                m.group(4) != null ? m.group(4) : m.group(2),       // end row
+                                CommonUtil.columnNumberFromColumnName(m.group(1)),  // Start column
+                                m.group(3) != null ? CommonUtil.columnNumberFromColumnName(m.group(3)) : CommonUtil.columnNumberFromColumnName(m.group(1))    // End Column
+                            }
+                        ));
+                    }
+                }
+                // Add the merge cell lines after the sheet data
+                output[mergeCellsIndex]=String.join(mergeCellLines,'\n');
+            }else{
+                // Remove the merge cells placeholder when there are no merge cells
+                // This prevents an empty line and yet the merge lines are in the correct place
+                output.remove(mergeCellsIndex);
+            }
+        }
+
+        // Return the fully populated output text
+        return String.join(output, '\n');
+    }
+
+
+    /**
+     * @description Method that takes an unzipped xlsx archive as parameter and
+     *              returns the sheet data in a custom LLM optimised format that converts
+     *              the sheets in column major order (i.e. as the sheet table)
+     *              Method uses the DOM class for XML Parsing what is faster but
+     *              more limited in maximum size
+     * @author 
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @return                An Custom LLM Text formatted representation of the data
+     */
+    global static String toLlmTextDomDoc(Map<String,Compression.ZipEntry> entries){
+        return toLlmTextDomDoc(entries,null);
+    }
+    
+
+    /**
+     * @description Method that takes an unzipped xlsx archive as parameter and
+     *              returns the sheet data in a custom LLM optimised format that converts
+     *              the sheets in column major order (i.e. as the sheet table)
+     *              Method uses the DOM class for XML Parsing what is faster but
+     *              more limited in maximum size
+     * @author 
+     * @param  entries        A map of path/zip entries from the unzipped XLSX file
+     * @param  selectedSheets A set of integers representing the sheet indexes to parse
+     * @return                An Custom LLM Text formatted representation of the data
+     */
+    global static String toLlmTextDomDoc(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets){
+
+        // Output lines for the full workbook
+        String[] output = new String[]{};
+
+        // Index for the sheet's merge cells in the output[] variable
+        Integer mergeCellsIndex;
+
+        // Create a list of shared strings
+        String[] sharedStrings = getSharedStrings(entries);
+
+        // In order to sort the worksheets, we need to put them in a list to sort
+        String[] worksheetPaths = getWorksheetPaths(entries);
+
+        // Get the names
+        Map<Integer,String> worksheetIndexNameMap = toWorksheetIndexNameMap(entries, selectedSheets);
+
+        // Keep track of skipped worksheets
+        Integer worksheetSkipCount = 0;
+
+        // Parse each worksheet in its own loop
+        for(Integer wi = 0, wiMax = worksheetPaths.size(); wi < wiMax; wi++){
+
+            // Skip sheets that are not included in the selectedSheets
+            if(selectedSheets != null && !selectedSheets.contains(wi)){
+                worksheetSkipCount++;
+                continue;
+            }
+
+            // Add the sheet marker
+            output.add(
+                String.join(
+                    new String[]{
+                        'SHEET=',
+                        worksheetIndexNameMap.get(wi - worksheetSkipCount)
+                    },
+                    ''
+                )
+            );
+
+            // Create a placeholder for the merge values
+            output.add('');
+            mergeCellsIndex = output.size() - 1;
+
+            // Create a DOM document for the current worksheet XML file
+            Dom.Document doc = new Dom.Document();
+            doc.load(entries.get(worksheetPaths[wi]).getContent().toString().replace('\uFEFF', ''));
+
+            // Get the root worksheet element
+            Dom.XmlNode root = doc.getRootElement();
+
+            // Keep a list of all merge cells in the sheet
+            String[] mergeCells = new String[]{};
+
+            // Keep track of current row state
+            String[] currentRowParts;
+
+            // Keep track of current column number
+            Integer currentColumnNumber;
+
+            // Counters for missing r attributes
+            Integer rowCounter = -1;
+            Integer columnCounter;
+
+            // Get the sheetData node
+            Dom.XmlNode sheetData = root.getChildElement('sheetData', Constant.NS_SPREADSHEET_ML);
+
+            // Process rows/cells
+            if(sheetData != null){
+
+                List<Dom.XmlNode> rowNodes = sheetData.getChildElements();
+
+                for(Integer ri = 0, riMax = rowNodes.size(); ri < riMax; ri++){
+
+                    Dom.XmlNode row = rowNodes[ri];
+
+                    // Increase the current row count (in case no r element exists)
+                    rowCounter++;
+
+                    // Reset the column counter for the current row (in case no r element exists)
+                    columnCounter = -1;
+
+                    // Start the current row token and the row number
+                    String rowNumber = row.getAttributeValue('r', null);
+                    currentRowParts = new String[]{
+                        'R' + (rowNumber != null ? rowNumber : String.valueOf(rowCounter))
+                    };
+
+                    // Get cells in this row
+                    List<Dom.XmlNode> cellNodes = row.getChildElements();
+
+                    for(Integer ci = 0, ciMax = cellNodes.size(); ci < ciMax; ci++){
+
+                        Dom.XmlNode cell = cellNodes[ci];
+
+                        // Increment the column counter for the current row
+                        columnCounter++;
+
+                        // Extract cell attributes
+                        String cellName = cell.getAttributeValue('r', null);
+                        String cellType = cell.getAttributeValue('t', null);
+
+                        // If there is a cell name extract all the details, else just take the increment
+                        if(cellName != null){
+                            String columnName = ParseUtil.columnNameFromCellName(cellName);
+                            currentColumnNumber = CommonUtil.columnNumberFromColumnName(columnName);
+                        }else{
+                            currentColumnNumber = columnCounter;
+                        }
+
+                        // Resolve the cell value
+                        String cellValue;
+
+                        if(cellType == 'inlineStr'){
+                            Dom.XmlNode isNode = cell.getChildElement('is', Constant.NS_SPREADSHEET_ML);
+                            if(isNode != null){
+                                Dom.XmlNode tNode = isNode.getChildElement('t', Constant.NS_SPREADSHEET_ML);
+                                if(tNode != null){
+                                    cellValue = tNode.getText();
+                                }
+                            }
+                        }else{
+                            Dom.XmlNode vNode = cell.getChildElement('v', Constant.NS_SPREADSHEET_ML);
+                            if(vNode != null){
+                                cellValue = vNode.getText();
+                            }
+                        }
+
+                        // Resolve shared string references
+                        if(cellValue != null && cellType == 's'){
+                            cellValue = sharedStrings[Integer.valueOf(cellValue)];
+                        }
+
+                        // Minimal normalization only, minimal performance impact
+                        if(!String.isBlank(cellValue)){
+                            if(
+                                cellValue.contains('\r') ||
+                                cellValue.contains('\n') ||
+                                cellValue.contains('^')
+                            ){
+                                cellValue = cellValue.replace('\r', ' ');
+                                cellValue = cellValue.replace('\n', ' ');
+                                cellValue = cellValue.replace('^', ' ');
+                            }
+
+                            // Add the cell value part
+                            currentRowParts.add('C' + currentColumnNumber + '=' + cellValue);
+                        }
+                    }
+
+                    // Only add rows that actually contain cell values
+                    if(currentRowParts.size() > 1){
+                        output.add(String.join(currentRowParts, '^'));
+                    }
+                }
+            }
+
+            // Process merge cells
+            Dom.XmlNode mergeCellsNode = root.getChildElement('mergeCells', Constant.NS_SPREADSHEET_ML);
+            if(mergeCellsNode != null){
+
+                List<Dom.XmlNode> mergeCellNodes = mergeCellsNode.getChildElements();
+
+                for(Integer mi = 0, miMax = mergeCellNodes.size(); mi < miMax; mi++){
+                    String ref = mergeCellNodes[mi].getAttributeValue('ref', null);
+                    if(ref != null){
+                        mergeCells.add(ref);
+                    }
+                }
+            }
+
+            // Add the worksheet merge cell info in the following format:
+            // MERGE=R2^R2:C3^C6
+            // MERGE=R19^R20:C2^C3
+            if(!mergeCells.isEmpty()){
+
+                String[] mergeCellLines = new String[]{};
+
+                for(Integer i = 0, max = mergeCells.size(); i < max; i++){
+
+                    if(String.isBlank(mergeCells[i])){
+                        continue;
+                    }
+
+                    Matcher m = Constant.CELL_RANGE_PATTERN.matcher(mergeCells[i]);
+
+                    if(m.matches()){
+                        mergeCellLines.add(
+                            String.format(
+                                'MERGE=R{0}^R{1}:C{2}^C{3}',
+                                new Object[]{
+                                    m.group(2), // Start row
+                                    m.group(4) != null ? m.group(4) : m.group(2), // End row
+                                    CommonUtil.columnNumberFromColumnName(m.group(1)), // Start column
+                                    m.group(3) != null
+                                        ? CommonUtil.columnNumberFromColumnName(m.group(3))
+                                        : CommonUtil.columnNumberFromColumnName(m.group(1)) // End column
+                                }
+                            )
+                        );
+                    }
+                }
+
+                // Add the merge cell lines after the sheet marker
+                output[mergeCellsIndex] = String.join(mergeCellLines, '\n');
+            }else{
+                // Remove the merge cells placeholder when there are no merge cells
+                output.remove(mergeCellsIndex);
+            }
+        }
+
+        // Return the fully populated output text
+        return String.join(output, '\n');
+    }
+
 
     /** **************************************************************************************************** **
      **                              PRIVATE SUPPORT METHODS (CLASS SPECIFIC)                                **
@@ -1049,8 +1676,11 @@ global with sharing class Parse{
         if(entries.containsKey(Constant.ZP_PATH_SHRD_STRS)){
 
             // Create an XSR for the shared strings XML file
-            XmlStreamReader xsr = new XmlStreamReader(entries.get(Constant.ZP_PATH_SHRD_STRS).getContent().toString());
-
+            XmlStreamReader xsr = new XmlStreamReader(entries.get(Constant.ZP_PATH_SHRD_STRS).getContent().toString().replace('\uFEFF', ''));
+            
+            // Treat texts as blocks
+            xsr.setCoalescing(true);
+            
             // Traverse the XML elements in the worksheet
             // I am not using while(xsr.hasNext()) to save a method call at the end of each item
             // For some reason it's about 30% faster to put an if statement at the end. No idea why.

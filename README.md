@@ -11,15 +11,23 @@ The library comes with the most common functionalities like freezing rows, mergi
 ## Blog
 - [Salesforce developer Blog: Reading Excel Files Using the Apex Zip Functionality](https://developer.salesforce.com/blogs/2025/02/reading-excel-files-using-the-apex-zip-functionality)
 - [Medium Article: Creating Excel (XLSX) Files Using The New Apex Zip Functionality](https://medium.com/@justusvandenberg/creating-excel-xlsx-files-using-the-new-apex-zip-functionality-8372c6689a10)
+- [Medium Article: From Excel to Prompt Templates: Making Spreadsheet Data LLM-Ready with Salesforce Agentforce ](https://medium.com/@justusvandenberg/from-excel-to-prompt-templates-making-spreadsheet-data-llm-ready-with-salesforce-agentforce-51afb8472bae)
 
 ## Package Info
 | Info | Value | ||
 |---|---|---|---|
 |Name|Lightweight - XLSX Util||
-|Version|0.6.0||
-|**Managed** | `sf package install --wait 30 --security-type AllUsers --package 04tP3000001EprhIAC` | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001EprhIAC) | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001EprhIAC)|
-|**Unlocked**| `sf package install --wait 30 --security-type AllUsers --package 04tP3000001EptJIAS` | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP3000001EptJIAS)          | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP3000001EptJIAS)|
+|Version|0.8.0||
+|**Managed** | <li>`sf package install --wait 30 --security-type AllUsers --package 04tP3000001pV7dIAE`</li><li>`/packaging/installPackage.apexp?p0=04tP3000001pV7dIAE`</li> | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001pV7dIAE) | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001pV7dIAE)|
+|**Unlocked**| <li>`sf package install --wait 30 --security-type AllUsers --package 04tP3000001pVZ3IAM`</li><li>`/packaging/installPackage.apexp?p0=04tP3000001pVZ3IAM`</li> | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP3000001pVZ3IAM)          | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP3000001pVZ3IAM)|
 
+
+## Optional LLM Util Package Info
+| Info | Value | ||
+|---|---|---|---|
+|Name|Lightweight - XLSX to LLM Util||
+|Version|0.2.0||
+|**Managed** | <li>`sf package install --wait 30 --security-type AllUsers --package 04tP3000001pV9FIAU`</li><li>`/packaging/installPackage.apexp?p0=04tP3000001pV9FIAU`</li> | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001pV9FIAU) | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001pV9FIAU)|
 
 ## Parse Excel files
 Parsing is done using the `Parse` class in the `xlsx` namespace. We can parse to two different formats: a *multi dimensional array* or a *list of maps*. In the array format the first list represents the worksheet, the child the rows and the grand child the cells.
@@ -50,6 +58,7 @@ Map<String,Compression.ZipEntry> entries = reader.getEntriesMap();
 ```
 
 To preserve heap size this can be simplyfied by putting all statements inline instead of separate variables:
+
 ```java
 // As multi dimensional array
 Object[][][] xlsxDataArray = xlsx.Parse.toArray(
@@ -67,12 +76,28 @@ List<Map<String,Object>> xlsxDataMap = xlsx.Parse.toMap(
 );
 ```
 
+## Parsing for LLMs / Salesforce Agentforce
+
+LLMs are notoriously bad at reading the complex structure of XLSX files. To get around this I created a custom output format that is easy to interpret by LLMs, small on tokens and it keeps the context
+
+```java
+// As multi dimensional array
+Object[][][] xlsxDataArray = xlsx.Parse.toArray(
+    new Compression.ZipReader(
+        [SELECT body FROM Document WHERE Id = '015Qz000004jf7yIAA' LIMIT 1]?.Body
+    ).getEntriesMap()
+);
+```
+
+
 ## Parse Methods
 For different use cases you can use different parse methods each with advantages. Using the `Dom.Document` class for reading XML is a lot faster than the `XmlStreamWriter` but also limited due to the large heap size it uses.
 
 The default output order for the `toArray()` methods is `Worksheet.Column.Row`. This follows the Excel cell format like A1, A2, ALL999 and is ideal when you work with **columns**. The `toArrayInverted()` methods use the `Worksheet.Row.Column` order. This makes working with **record data** (i.e. CSV) a lot easier.
 
 The `xlsx.Parse` class is used to parse an XLSX file body from an unzipped file body
+
+### Array Parse Methods
 
 |Return type| Method signature| Use for |
 |---|---|---|
@@ -84,15 +109,51 @@ The `xlsx.Parse` class is used to parse an XLSX file body from an unzipped file 
 | `Object[][][]`             |`xlsx.Parse.toArrayInverted(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets)`       | Large files, CSV like data, specific sheets only, Output format is Worksheets.Rows.Columns |
 | `Object[][][]`             |`xlsx.Parse.toArrayInvertedDomDoc(Map<String,Compression.ZipEntry> entries)`                              | Small files, CSV like data, Output format is Worksheets.Rows.Columns  |
 | `Object[][][]`             |`xlsx.Parse.toArraInvertedyDomDoc(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets)` | Small files, CSV like data, specific sheets only, Output format is Worksheets.Rows.Columns |
+
+### Map Parse Methods
+
+|Return type| Method signature| Use for |
+|---|---|---|
 | `List<Map<String,Object>>` |`xlsx.Parse.toMap(Map<String,Compression.ZipEntry> entries)`                                              | Large files, Data based on cell names |
 | `List<Map<String,Object>>` |`xlsx.Parse.toMap(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets)`                 | Large files, Data based on cell names, specific sheets only |
 | `List<Map<String,Object>>` |`xlsx.Parse.toMapDomDoc(Map<String,Compression.ZipEntry> entries)`                                        | Small files, Data based Cell Name |
 | `List<Map<String,Object>>` |`xlsx.Parse.toMapDomDoc(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets)`           | Small files, Data based on cell namese, specific sheets only |
+
+### Sheet name / Array Map Parse Methods
+
+|Return type| Method signature| Use for |
+|---|---|---|
+| `Map<String, Object[][]>` |`xlsx.Parse.toSheetNameArrayMap(Map<String, Compression.ZipEntry> entries`                                         | Large files, CSV like data, Output format is Worksheets.Columns.Rows based on the sheet name|
+| `Map<String, Object[][]>` |`xlsx.Parse.toSheetNameArrayMap(Map<String, Compression.ZipEntry> entries, Set<Integer> selectedSheets)`           | Large files, CSV like data, specific sheets only, Output format is Worksheets.Columns.Rows based on the sheet name|
+| `Map<String, Object[][]>` |`xlsx.Parse.toSheetNameArrayInvertedMap(Map<String, Compression.ZipEntry> entries`                                 | Large files, CSV like data, Output format is Worksheets.Rows.Columns based on the sheet name|
+| `Map<String, Object[][]>` |`xlsx.Parse.toSheetNameArrayInvertedMap(Map<String, Compression.ZipEntry> entries, Set<Integer> selectedSheets)`   | Large files, CSV like data, specific sheets only, Output format is Worksheets.Rows.Columns based on the sheet name|
+
+
+## Worksheet Name/Index Methods
+
+|Return type| Method signature| Use for |
+|---|---|---|
 | `Map<String,Integer>`      |`xlsx.Parse.toWorksheetNameIndexMap(Map<String,Compression.ZipEntry> entries)`                            | You need to get the index based on the name of the worksheet |
+| `Map<String,Integer>`      |`xlsx.Parse.toWorksheetNameIndexMap(Map<String,Compression.ZipEntry> entries,Set<Integer> selectedSheets)`| You need to get the index based on the name of the worksheet, specific sheets only |
+| `Map<Integer,String>`      |`xlsx.Parse.toWorksheetIndexNameMap(Map<String,Compression.ZipEntry> entries)`                            | You need to get the name based on the index of the worksheet |
+| `Map<Integer,String>`      |`xlsx.Parse.toWorksheetIndexNameMap(Map<String,Compression.ZipEntry> entries,Set<Integer> selectedSheets)`| You need to get the name based on the index of the worksheet, specific sheets only |
+
+## LLM Methods
+LLMs are notoriously bad at reading XLSX files. In order to help Salesforce's Agentforce to read XLSX files using prompt templates there are a few methods that convert the Excel sheet data into an LLM friendly format.
+Note: This is very CPU intensive so massive files are not really supported.
+
+|Return type| Method signature| Use for |
+|---|---|---|
+| `String` |`xlsx.Parse.toLlmText(Map<String,Compression.ZipEntry> entries)`                                    | Medium Files, You need to convert the output to an LLM fiendly format  |
+| `String` |`xlsx.Parse.toLlmText(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets)`       | Medium Files, You need to convert the output to an LLM fiendly format, specific sheets only |
+| `String` |`xlsx.Parse.toLlmTextDomDoc(Map<String,Compression.ZipEntry> entries)`                              | Small Files,  You need to convert the output to an LLM fiendly format, specific sheets only |
+| `String` |`xlsx.Parse.toLlmTextDomDoc(Map<String,Compression.ZipEntry> entries, Set<Integer> selectedSheets)` | Small Files,  You need to convert the output to an LLM fiendly format, specific sheets only |
 
 
 ## Build Methods
+
 The `xlsx.Build` class is used to create an XLSX file from a `xlsx.Builder` class instance.
+
 |Return type| Method signature| Use for |
 |---|---|---|
 |`Blob`                          |`xlsx.Build.asBlob(Builder b)`               | Building your XLSX file as a `Blob` Object|
@@ -102,8 +163,10 @@ The `xlsx.Build` class is used to create an XLSX file from a `xlsx.Builder` clas
 
 
 ## Builder Methods
+
 The `xlsx.Builder` class is used to setup/configure the entire XLSX document. Use this to add worksheets, rows and cells but also configure the document name etc.
 Making changes to anything in the sheets uses the worksheet index (`wi`), column index (`ci`) and row index (`ri`) parameters. These are the zero indexes so cell A1 on Sheet1 is set as [0][0][0].
+
 |Return type| Method signature| Use for |
 |---|---|---|
 |`void`     |`setUseSharedStrings(Boolean value)`                       | Enable or disable shared strings. Shared strings is recommended and enabled by default.|
@@ -142,6 +205,7 @@ Making changes to anything in the sheets uses the worksheet index (`wi`), column
 |`void`     |`setCellStyle(Integer wi, Integer ci, Integer ri,Integer s)`   | Set a cell's style after it has been created |
 
 ## Styles Methods
+
 The `xlsx.StylesBuilder` class is used to create custom styles and add them to a `xlsx.Builder` class instance.
 The `add methods` return an `index`, the indexes for number formats, fonts, files borders and alignments need to be used as the input parameters for the `addCellStyle()` method to create a unique style. Indexes can be reused to mix and match styles.
 
@@ -159,7 +223,9 @@ The `add methods` return an `index`, the indexes for number formats, fonts, file
 
 
 ## CommonUtil Methods
+
 The `xlsx.CommonUtil` class contains utilities that help you with the setup of a `xlsx.Builder` class instance. 
+
 |Return type| Method signature| Use for |
 |---|---|---|
 |`String`     | `columnNameFromColumnIndex(Integer columnIndex)`   |Translate a column `index` to a column name. I.e. 0=A and 4=E etc.|
@@ -168,6 +234,7 @@ The `xlsx.CommonUtil` class contains utilities that help you with the setup of a
 |`String`     | `randomHtmlHexColorCode()`                         |Creates a random 6 digit HEX code that can be used in tabs. Handy for testing purposes to distinguish between tabs.|
 |`Datetime`   | `getTimestamp()`                                   |Get the timestamp that is used when creating an `xlsx.Builder` class instance. This ensures you use the same timestamp through out.|
 |`String`     | `getTimestampString()`                             |Get the timestamp as a string that can be used in a file name|
+|`String`     | `getStaticResourceBody(String staticResourceName)` |Get's the body of a static resource based on the name|
 
 
 ## Exceptions
@@ -189,6 +256,7 @@ The [`examples folder`](examples) contains a number of example implementation fo
 |[12_Parse_Attachment.apex](examples/parser/12_Parse_Attachment.apex)               | Example to parse a an XLSX file stored as ContentVersion Object   ||
 |[13_Parse_To_CSV.apex](examples/parser/13_Parse_To_CSV.apex)                       | Example to parse a an XLSX file and convert it to a CSV file (one for each worksheet)        ||
 |[14_Parse_To_sObject_List.apex](examples/parser/14_Parse_To_sObject_List.apex)     | Example to parse a an XLSX to an sObject list. This allows you to handle the data as records ||
+|[15_Parse_To_LLM_Text.apex](examples/parser/15_Parse_To_LLM_Text.apex)             | Example to parse a an XLSX to an LLM Optimised output format ||
 
 ### Build Examples
 |File| Description | Additional Info|
