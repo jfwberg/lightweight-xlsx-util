@@ -29,6 +29,7 @@ global with sharing class LlmText {
             validateRequests(requests);
          
             // Set the additional (optional) values
+            Boolean      useDomDoc                  = requests[0].useDomDoc                  ?? false;
             Boolean      includeDefaultInstructions = requests[0].includeDefaultInstructions ?? false;
             Set<Integer> selectedSheets             = requests[0].selectedSheets != null ? new Set<Integer>(requests[0].selectedSheets) : null;
 
@@ -36,6 +37,19 @@ global with sharing class LlmText {
             return new Response[]{ 
                 new Response(
                     ((includeDefaultInstructions) ? CommonUtil.getStaticResourceBody(Constant.LLM_DEF_INSTRUCTION_SR) : '' ) +
+                    ((useDomDoc) ?
+                    Parse.toLlmTextDomDoc(
+                        new Compression.ZipReader(
+                            validateXlsx([
+                            SELECT FileExtension, VersionData FROM ContentVersion
+                            WHERE ContentDocumentId = :requests[0].contentDocumentIds[0] 
+                            AND IsLatest = true 
+                            WITH SECURITY_ENFORCED
+                            LIMIT 1
+                            ][0])
+                        )?.getEntriesMap(),
+                        selectedSheets
+                    ) :
                     Parse.toLlmText(
                         new Compression.ZipReader(
                             validateXlsx([
@@ -47,7 +61,7 @@ global with sharing class LlmText {
                             ][0])
                         )?.getEntriesMap(),
                         selectedSheets
-                    )
+                    ))
                 )
             };
         }catch(Exception e) {

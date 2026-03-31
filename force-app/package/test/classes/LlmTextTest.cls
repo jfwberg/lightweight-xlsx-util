@@ -37,6 +37,43 @@ private class LlmTextTest {
 
 
     @IsTest
+    static void testGetAllDomDoc() {
+        
+        // Create a new builder with a few sheets an cells
+        Builder b = new Builder();
+        b.addTextCell(0, 0, 0, 'Value A1');
+        b.addTextCell(1, 1, 1, 'Value B2');
+        b.addTextCell(2, 2, 2, 'Value\n^\rC3');
+        
+        // Create the blob
+        ContentVersion cv = new ContentVersion();
+        cv.Title          = 'XLSX Test';
+        cv.PathOnClient   = 'test.xlsx';
+        cv.VersionData    = Build.asBlob(b);
+        insert cv;
+
+        // Create new request
+        LlmText.Request request = new LlmText.Request();
+        request.useDomDoc                  = true;
+        request.includeDefaultInstructions = true;
+        request.contentDocumentIds         = new Id[]{[SELECT ContentDocumentId FROM ContentVersion WHERE Id = :cv.Id].ContentDocumentId};
+        LlmText.Request[] requests         = new LlmText.Request[]{request};
+        
+        LlmText.Response[] results;
+        
+        Test.startTest();
+        results = LlmText.convertContentDocumentToLlmText(requests);
+        Test.stopTest();
+
+        Assert.areEqual(
+            CommonUtil.getStaticResourceBody(Constant.LLM_DEF_INSTRUCTION_SR) + 'SHEET=Sheet1\nR1^C1=Value A1\nSHEET=Sheet2\nR2^C2=Value B2\nSHEET=Sheet3\nR3^C3=Value   C3',
+            results[0].llmText,
+            'Unexpected LLM Response'
+        );
+    }
+
+
+    @IsTest
     static void testGetAllExceptions() {
         
        

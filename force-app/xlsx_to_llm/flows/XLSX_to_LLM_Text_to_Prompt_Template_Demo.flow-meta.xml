@@ -50,7 +50,13 @@
                 <elementReference>Convert_Selected_Worksheets_to_Integers.integerList</elementReference>
             </value>
         </inputParameters>
-        <nameSegment>xlsx__LlmText</nameSegment>
+        <inputParameters>
+            <name>useDomDoc</name>
+            <value>
+                <elementReference>Use_Dom_Class_For_Parsing</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>LlmText</nameSegment>
         <offset>0</offset>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </actionCalls>
@@ -98,7 +104,7 @@
                 <elementReference>Prompt_Template_Instructions</elementReference>
             </value>
         </inputParameters>
-        <nameSegment>XLSX_to_LLM_Text_to_Prompt_Template_Demo</nameSegment>
+        <nameSegment>xlsx__XLSX_to_LLM_Text_to_Prompt_Template_Demo</nameSegment>
         <offset>0</offset>
         <outputParameters>
             <assignToReference>PromptOutput</assignToReference>
@@ -377,6 +383,7 @@
             </defaultValue>
             <fieldText>Preview LLM Text</fieldText>
             <fieldType>InputField</fieldType>
+            <helpText>&lt;p&gt;Selecting this option shows you a preview screen with the converted XLSX in the LLM-XL language and the optional instructions.&lt;/p&gt;</helpText>
             <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
             <isRequired>true</isRequired>
             <styleProperties>
@@ -394,8 +401,26 @@
             <defaultValue>
                 <booleanValue>true</booleanValue>
             </defaultValue>
-            <fieldText>Include Default LLM Instructions</fieldText>
+            <fieldText>Include Default LLM Interpretation Instructions</fieldText>
             <fieldType>InputField</fieldType>
+            <helpText>&lt;p&gt;This adds the default LLM-XL language interpretation instructions at the start of the output instructions. It&apos;s recommended to do this but you are able to add your own instructions if you want.&lt;/p&gt;</helpText>
+            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Use_Dom_Class_For_Parsing</name>
+            <dataType>Boolean</dataType>
+            <fieldText>Use Dom.Document Class For Parsing (Advanced)</fieldText>
+            <fieldType>InputField</fieldType>
+            <helpText>&lt;p&gt;Parsing the XLSX file using the Dom.Document class is significantly faster but due to the Apex heap size limitations this can only handle small files.&lt;/p&gt;</helpText>
             <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
             <isRequired>true</isRequired>
             <styleProperties>
@@ -425,7 +450,7 @@
         <fields>
             <name>Prompt_Template_Instructions</name>
             <defaultValue>
-                <stringValue>Tell me in as much details about the input data as you can. Be very descriptive. Also give some ideas of how we can leverage this data.</stringValue>
+                <stringValue>{!defaultOutputInstructions}</stringValue>
             </defaultValue>
             <fieldText>Prompt Template Instructions</fieldText>
             <fieldType>LargeTextArea</fieldType>
@@ -534,6 +559,17 @@
         </connector>
     </start>
     <status>Active</status>
+    <textTemplates>
+        <description>The default output format instructions. So not the interpretation instructions, but purely how you want the output to look like</description>
+        <name>defaultOutputInstructions</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>## OUTPUT INSTRUCTIONS
+- First, explain the detected structure of each sheet
+- Then extract the meaningful data based on that structure
+- The exact output format will be defined separately.
+- Follow any additional instructions provided for formatting or mapping the extracted data.
+- Focus on correctness, structure, and completeness over formatting.</text>
+    </textTemplates>
     <variables>
         <name>contentDocumentId</name>
         <dataType>String</dataType>

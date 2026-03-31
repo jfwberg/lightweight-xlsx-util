@@ -11,6 +11,7 @@
 **/flexipages/**
 **/objects/**
 **/permissionsets/**
+**/permissionsetgroups/**
 
 # Comment when deploying the connection
 **/customMetadata/**

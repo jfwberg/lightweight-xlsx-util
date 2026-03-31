@@ -11,24 +11,23 @@ The library comes with the most common functionalities like freezing rows, mergi
 ## Blog
 - [Salesforce developer Blog: Reading Excel Files Using the Apex Zip Functionality](https://developer.salesforce.com/blogs/2025/02/reading-excel-files-using-the-apex-zip-functionality)
 - [Medium Article: Creating Excel (XLSX) Files Using The New Apex Zip Functionality](https://medium.com/@justusvandenberg/creating-excel-xlsx-files-using-the-new-apex-zip-functionality-8372c6689a10)
-- [Medium Article: From Excel to Prompt Templates: Making Spreadsheet Data LLM-Ready with Agentforce ](#)
+- [Medium Article: From Excel to Prompt Templates: Making Spreadsheet Data LLM-Ready with Salesforce Agentforce ](https://medium.com/@justusvandenberg/from-excel-to-prompt-templates-making-spreadsheet-data-llm-ready-with-salesforce-agentforce-51afb8472bae)
 
 ## Package Info
 | Info | Value | ||
 |---|---|---|---|
 |Name|Lightweight - XLSX Util||
-|Version|0.7.0||
-|**Managed** | <li>`sf package install --wait 30 --security-type AllUsers --package 04tP3000001EprhIAC`</li><li>`/packaging/installPackage.apexp?p0=04tP3000001EprhIAC`</li> | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001EprhIAC) | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001EprhIAC)|
-|**Unlocked**| <li>`sf package install --wait 30 --security-type AllUsers --package 04tP3000001EptJIAS`</li><li>`/packaging/installPackage.apexp?p0=04tP3000001EptJIAS`</li> | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP3000001EptJIAS)          | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP3000001EptJIAS)|
-
+|Version|0.8.0||
+|**Managed** | <li>`sf package install --wait 30 --security-type AllUsers --package 04tP3000001pV7dIAE`</li><li>`/packaging/installPackage.apexp?p0=04tP3000001pV7dIAE`</li> | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001pV7dIAE) | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001pV7dIAE)|
+|**Unlocked**| <li>`sf package install --wait 30 --security-type AllUsers --package 04tP3000001pVZ3IAM`</li><li>`/packaging/installPackage.apexp?p0=04tP3000001pVZ3IAM`</li> | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?p0=04tP3000001pVZ3IAM)          | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?p0=04tP3000001pVZ3IAM)|
 
 
 ## Optional LLM Util Package Info
 | Info | Value | ||
 |---|---|---|---|
 |Name|Lightweight - XLSX to LLM Util||
-|Version|0.1.0||
-|**Managed** | <li>`sf package install --wait 30 --security-type AllUsers --package 04tP3000001ouBJIAY`</li><li>`/packaging/installPackage.apexp?p0=04tP3000001ouBJIAY`</li> | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001ouBJIAY) | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001ouBJIAY)|
+|Version|0.2.0||
+|**Managed** | <li>`sf package install --wait 30 --security-type AllUsers --package 04tP3000001pV9FIAU`</li><li>`/packaging/installPackage.apexp?p0=04tP3000001pV9FIAU`</li> | [Install in production](https://login.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001pV9FIAU) | [Install in Sandbox](https://test.salesforce.com/packaging/installPackage.apexp?mgd=true&p0=04tP3000001pV9FIAU)|
 
 ## Parse Excel files
 Parsing is done using the `Parse` class in the `xlsx` namespace. We can parse to two different formats: a *multi dimensional array* or a *list of maps*. In the array format the first list represents the worksheet, the child the rows and the grand child the cells.
