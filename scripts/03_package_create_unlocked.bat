@@ -5,14 +5,14 @@ REM *****************************
 REM Package Create Config
 SET devHub=devHubAlias
 SET packageName=Lightweight - XLSX Util (Unlocked)
-SET packageDescription=A lightweight library to build and parse Excel(XLSX) files
+SET packageDescription=A lightweight Apex library to build and parse Excel(XLSX) files and optionally convert the output to an LLM optimised positional format.
 SET packageType=Unlocked
 SET packagePath=force-app/package
 SET definitionFile=config/project-package-def.json
 
 REM Package Config
 SET packageId=0HoP300000000srKAA
-SET packageVersionId=04tP3000001pVZ3IAM
+SET packageVersionId=04tP3000001ytPFIAY
 
 REM Create package
 sf package create --name "%packageName%" --description "%packageDescription%" --package-type "%packageType%" --path "%packagePath%" --target-dev-hub %devHub%

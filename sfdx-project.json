@@ -1,66 +1,33 @@
 {
   "packageDirectories": [
     {
-      "versionName": "v66.0 - 0.8",
-      "versionNumber": "0.8.0.NEXT",
+      "versionName": "v66.0 - 0.9",
+      "versionNumber": "0.9.0.NEXT",
       "ancestorVersion": "HIGHEST",
       "path": "force-app/package",
-      "default": false,
+      "default": true,
       "package": "Lightweight - XLSX Util",
-      "versionDescription": "A lightweight library to build and parse Excel(XLSX) files"
+      "versionDescription": "A lightweight Apex library to build and parse Excel(XLSX) files and optionally convert the output to an LLM optimised positional format."
     },
     {
-      "versionName": "v66.0 - 0.8",
-      "versionNumber": "0.8.0.NEXT",
+      "versionName": "v66.0 - 0.9",
+      "versionNumber": "0.9.0.NEXT",
       "path": "force-app/package",
       "default": false,
       "package": "Lightweight - XLSX Util (Unlocked)",
-      "versionDescription": "A lightweight library to build and parse Excel(XLSX) files"
-    },
-    {
-      "versionName": "v66.0 - 0.2",
-      "versionNumber": "0.2.0.NEXT",
-      "ancestorVersion": "HIGHEST",
-      "path": "force-app/xlsx_to_llm",
-      "default": true,
-      "package": "Lightweight - XLSX to LLM Util",
-      "versionDescription": "A set of XLSX to LLM (flow) Utilities to compliment the Lightweight - XLSX Util",
-      "dependencies": [
-        {
-          "package": "Lightweight - XLSX Util@0.8.0-1"
-        }
-      ]
+      "versionDescription": "A lightweight Apex library to build and parse Excel(XLSX) files and optionally convert the output to an LLM optimised positional format."
     }
   ],
   "name": "lightweight-xlsx-util",
-  "namespace": "X007",
+  "namespace": "xlsx",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "66.0",
   "packageAliases": {
     "Lightweight - XLSX Util": "0HoP300000000jBKAQ",
-    "Lightweight - XLSX Util@0.1.0-1": "04tP30000010lw1IAA",
-    "Lightweight - XLSX Util@0.2.0-1": "04tP300000164pxIAA",
-    "Lightweight - XLSX Util@0.3.0-2": "04tP3000001Az9hIAC",
-    "Lightweight - XLSX Util@0.4.0-1": "04tP3000001DJVhIAO",
-    "Lightweight - XLSX Util@0.5.0-1": "04tP3000001EZDRIA4",
-    "Lightweight - XLSX Util@0.6.0-1": "04tP3000001EprhIAC",
-    "Lightweight - XLSX Util (Unlocked)": "0HoP300000000srKAA",
-    "Lightweight - XLSX Util (Unlocked)@0.1.0-2": "04tP30000010p0LIAQ",
-    "Lightweight - XLSX Util (Unlocked)@0.2.0-1": "04tP300000164rZIAQ",
-    "Lightweight - XLSX Util (Unlocked)@0.3.0-1": "04tP3000001Az85IAC",
-    "Lightweight - XLSX Util (Unlocked)@0.4.0-1": "04tP3000001DJXJIA4",
-    "Lightweight - XLSX Util (Unlocked)@0.5.0-2": "04tP3000001EZIHIA4",
-    "Lightweight - XLSX Util (Unlocked)@0.6.0-1": "04tP3000001EptJIAS",
-    "Lightweight - XLSX Util@0.7.0-1": "04tP3000001oi25IAA",
-    "Lightweight - XLSX Util@0.7.0-2": "04tP3000001oiOfIAI",
-    "Lightweight - XLSX Util@0.7.0-3": "04tP3000001okBxIAI",
-    "Lightweight - XLSX Util@0.7.0-4": "04tP3000001or6zIAA",
-    "Lightweight - XLSX to LLM Util": "0HoP300000001ovKAA",
-    "Lightweight - XLSX to LLM Util@0.1.0-1": "04tP3000001ou9hIAA",
-    "Lightweight - XLSX to LLM Util@0.1.0-2": "04tP3000001ouBJIAY",
-    "Lightweight - XLSX Util (Unlocked)@0.7.0-1": "04tP3000001ouWHIAY",
     "Lightweight - XLSX Util@0.8.0-1": "04tP3000001pV7dIAE",
-    "Lightweight - XLSX to LLM Util@0.2.0-1": "04tP3000001pV9FIAU",
-    "Lightweight - XLSX Util (Unlocked)@0.8.0-1": "04tP3000001pVZ3IAM"
+    "Lightweight - XLSX Util@0.9.0-1": "04tP3000001ytNdIAI",
+    "Lightweight - XLSX Util (Unlocked)": "0HoP300000000srKAA",
+    "Lightweight - XLSX Util (Unlocked)@0.8.0-1": "04tP3000001pVZ3IAM",
+    "Lightweight - XLSX Util (Unlocked)@0.9.0-1": "04tP3000001ytPFIAY"
   }
 }

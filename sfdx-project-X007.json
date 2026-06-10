@@ -1,0 +1,28 @@
+{
+  "packageDirectories": [
+    {
+      "versionName": "v66.0 - 0.2",
+      "versionNumber": "0.2.0.NEXT",
+      "ancestorVersion": "HIGHEST",
+      "path": "force-app/xlsx_to_llm",
+      "default": false,
+      "package": "Lightweight - XLSX to LLM Util",
+      "versionDescription": "A set of XLSX to LLM (flow) Utilities to compliment the Lightweight - XLSX Util",
+      "dependencies": [
+        {
+          "package": "Lightweight - XLSX Util@0.8.0-1"
+        }
+      ]
+    }
+  ],
+  "name": "lightweight-xlsx-util",
+  "namespace": "X007",
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "66.0",
+  "packageAliases": {
+    "Lightweight - XLSX Util@0.8.0-1": "04tP3000001pV7dIAE",
+    "Lightweight - XLSX to LLM Util": "0HoP300000001ovKAA",
+    "Lightweight - XLSX to LLM Util@0.1.0-1": "04tP3000001ou9hIAA",
+    "Lightweight - XLSX to LLM Util@0.1.0-2": "04tP3000001ouBJIAY"
+  }
+}

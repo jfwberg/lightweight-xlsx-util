@@ -83,9 +83,6 @@ global with sharing class Parse{
             if(xsr.hasNext()){ xsr.next(); } else { break; }
         }
 
-        // Sort the sheet indexes
-        sheetIndexes.sort();
-
         // Create a map for the output
         Map<String,Integer> worksheetNameIndexMap = new Map<String,Integer>();
 
